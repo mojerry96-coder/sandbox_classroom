@@ -1,6 +1,10 @@
-import json, subprocess, math, numpy as np, soundfile as sf
+import json, os, subprocess, math, numpy as np, soundfile as sf
 from PIL import Image, ImageDraw, ImageFont
-M=json.load(open('timeline.json')); FPS=30; DUR=90.0; W,H=1920,1080
+# Run from the video work dir (default source/video): needs timeline.json (record.py), sched.json
+# (schedule.py), gs500.ttf, and the narration in source/narration/s<i>.wav.
+SCH=json.load(open('sched.json'))
+M=json.load(open('timeline.json')); FPS=30; W,H=1920,1080
+DUR=max(90.0,round(max(o['s']+o['d'] for o in SCH)+0.8,2))
 imgs=sorted(M['images'],key=lambda x:x[0]); keys=M['keys']; clicks=M['clicks']
 OFF=[0.6,10.4,28.4,48.4,66.4,77.4]
 LINES=[
@@ -10,18 +14,17 @@ LINES=[
 "Practise managing people here. A co-teacher invitation appears as Pending, while this sandbox adds a student as Active. You can also regenerate the class code.",
 "Need support? Open Practice Help for an explanation, guided steps, or this walkthrough.",
 "Review what you tried and decide what needs more practice. There is no score. Return to any tab, explore in your own order, and reset whenever you want."]
-SCH=json.load(open('/home/claude/tts/sched.json'))
 cues=[{"s":o['s'],"e":round(o['s']+o['d']+0.35,2),"t":o['t']} for o in SCH]
 for i in range(len(cues)-1): cues[i]['e']=min(cues[i]['e'],cues[i+1]['s'])
-cues.append({"s":87.8,"e":90.0,"t":"Your turn — Begin Practice."})
-json.dump(cues,open('/home/claude/sb/cues.json','w'),indent=1)
+cues[-1]['e']=min(cues[-1]['e'],DUR)
+json.dump(cues,open('cues.json','w'),indent=1)
 def ts(x,sep=','): h=int(x//3600);m=int(x%3600//60);s=x%60; return f"{h:02d}:{m:02d}:{int(s):02d}{sep}{int(round((s-int(s))*1000)):03d}"
 open('captions.srt','w').write("\n".join(f"{i+1}\n{ts(c['s'])} --> {ts(c['e'])}\n{c['t']}\n" for i,c in enumerate(cues)))
 open('captions.vtt','w').write("WEBVTT\n\n"+"\n".join(f"{ts(c['s'],'.')} --> {ts(c['e'],'.')}\n{c['t']}\n" for c in cues))
 # ---- audio: narration + soft clicks
 sr=24000; audio=np.zeros(int(DUR*sr),dtype=np.float32)
 for o in SCH:
-    a,r=sf.read(f"/home/claude/tts/s{o['i']}.wav",dtype='float32'); assert r==sr
+    a,r=sf.read(os.path.join(os.path.dirname(os.path.abspath(__file__)),"narration",f"s{o['i']}.wav"),dtype='float32'); assert r==sr
     st=int(o['s']*sr); audio[st:st+len(a)]+=a[:len(audio)-st]
 tick=np.exp(-np.linspace(0,40,int(.03*sr)))*np.sin(2*np.pi*1900*np.linspace(0,.03,int(.03*sr)))*0.05
 for t,_,_ in clicks:

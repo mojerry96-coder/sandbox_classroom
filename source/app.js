@@ -607,7 +607,7 @@ function openHelp(trigger,start){
     const d=dlgRef.el.firstElementChild;
     if(which==="menu"){d.innerHTML=`<div class="hd"><div><span class="eb">Practice Help</span><h2 id="sdT">How can we help?</h2></div><button class="ib" data-x aria-label="Close help">${I("close")}</button></div>
       <div class="bd">
-       <button class="choice" id="hWatch">${I("smart_display")}<span><b>Watch the walkthrough</b><span class="s">A 70-second captioned overview. Your sandbox isn't changed.</span></span>${I("chevron_right","go")}</button>
+       <button class="choice" id="hWatch">${I("smart_display")}<span><b>Watch the walkthrough</b><span class="s">A 76-second captioned overview. Your sandbox isn't changed.</span></span>${I("chevron_right","go")}</button>
        <button class="choice" id="hGuide">${I("route")}<span><b>Guide me</b><span class="s">Choose one action in ${tabName}. We'll highlight each step.</span></span>${I("chevron_right","go")}</button>
        <button class="choice" id="hWhat">${I("info")}<span><b>What can I do here?</b><span class="s">A short explanation of the ${tabName} tab.</span></span>${I("chevron_right","go")}</button>
       </div>`;
@@ -641,14 +641,14 @@ function openPlayer(trigger){
   const has=!!VIDEO_SRC&&!VIDEO_SRC.startsWith("/*");
   const ref=makeModal("simscrim","player","plT",`
     <div class="ph2"><h2 id="plT">Walkthrough · The Sandbox Class</h2><button class="ib" id="plX" aria-label="Close walkthrough">${I("close")}</button></div>
-    <div class="vwrap">${has?`<video id="vid" preload="metadata" playsinline aria-label="Walkthrough video, 70 seconds, showing the sandbox in use">${VIDEO_WEBM.startsWith("data:")?`<source src="${VIDEO_WEBM}" type="video/webm">`:""}<source src="${VIDEO_SRC}" type="video/mp4"></video>
-       <div class="cc" id="cc" hidden></div><div class="big" id="big"><button id="bigPlay" aria-label="Play walkthrough">${I("play_arrow","fill")}</button></div>`
+    <div class="vwrap">${has?`<video id="vid" preload="metadata" playsinline aria-label="Walkthrough video, 76 seconds, showing the sandbox in use">${VIDEO_WEBM.startsWith("data:")?`<source src="${VIDEO_WEBM}" type="video/webm">`:""}<source src="${VIDEO_SRC}" type="video/mp4"></video>
+       <div class="cc" id="cc" hidden></div><button class="vbegin" id="vBegin" hidden>${I("play_arrow","fill")}Begin Practice</button><div class="big" id="big"><button id="bigPlay" aria-label="Play walkthrough">${I("play_arrow","fill")}</button></div>`
        :`<div class="nov">The walkthrough video isn't included in this build. Use Practice Help › Guide me instead.</div>`}</div>
     ${has?`<div class="pctl">
       <button class="ib" id="pPlay" aria-label="Play">${I("play_arrow","fill")}</button>
       <button class="ib" id="pReplay" aria-label="Replay from start">${I("replay")}</button>
-      <span class="time" id="pTime">0:00 / 1:10</span>
-      <input type="range" class="seek" id="pSeek" min="0" max="70" step="0.1" value="0" aria-label="Seek">
+      <span class="time" id="pTime">0:00 / 1:16</span>
+      <input type="range" class="seek" id="pSeek" min="0" max="76" step="0.1" value="0" aria-label="Seek">
       <button class="ib" id="pMute" aria-label="Mute">${I("volume_up")}</button>
       <input type="range" class="vol" id="pVol" min="0" max="1" step="0.05" value="${lastVol}" aria-label="Volume">
       <button class="ib" id="pCC" aria-pressed="${ccOn}" aria-label="Captions">${I("closed_caption")}</button>
@@ -658,22 +658,28 @@ function openPlayer(trigger){
   (box,close)=>{box.querySelector("#plX").onclick=()=>{const v=box.querySelector("#vid");v&&v.pause();close()};if(!has)return;
     const v=box.querySelector("#vid"),seek=box.querySelector("#pSeek"),vol=box.querySelector("#pVol"),cc=box.querySelector("#cc"),big=box.querySelector("#big");
     v.volume=lastVol;
-    const setPlay=()=>{box.querySelector("#pPlay").innerHTML=v.paused?I("play_arrow","fill"):I("pause","fill");box.querySelector("#pPlay").setAttribute("aria-label",v.paused?"Play":"Pause");big.hidden=!v.paused||v.currentTime>0&&!v.ended};
+    const setPlay=()=>{box.querySelector("#pPlay").innerHTML=v.paused?I("play_arrow","fill"):I("pause","fill");box.querySelector("#pPlay").setAttribute("aria-label",v.paused?"Play":"Pause");big.hidden=!v.paused||v.currentTime>0};
     const toggle=()=>{v.paused||v.ended?v.play():v.pause()};
     box.querySelector("#bigPlay").onclick=toggle;box.querySelector("#pPlay").onclick=toggle;v.onclick=toggle;
     box.querySelector("#pReplay").onclick=()=>{v.currentTime=0;v.play()};
-    v.onplay=setPlay;v.onpause=setPlay;v.onended=setPlay;
-    v.onloadedmetadata=()=>{seek.max=v.duration||70;box.querySelector("#pTime").textContent=`${fmt(v.currentTime)} / ${fmt(v.duration)}`};
-    v.ontimeupdate=()=>{seek.value=v.currentTime;seek.setAttribute("aria-valuetext",`${fmt(v.currentTime)} of ${fmt(v.duration)}`);box.querySelector("#pTime").textContent=`${fmt(v.currentTime)} / ${fmt(v.duration||70)}`;
+    /* End card: the drawn Begin Practice button becomes a real one. It appears with the closing line
+       ("Your turn — Begin Practice."), which is always spoken over the end card. */
+    const vb=box.querySelector("#vBegin"),endT=CUES.length?CUES[CUES.length-1].s-0.9:Infinity;
+    const endCard=()=>{const on=v.ended||v.currentTime>=endT;vb.hidden=!on;if(on)big.hidden=true};
+    vb.onclick=()=>{v.pause();const fromWelcome=!$("#welcome").hidden;close();if(fromWelcome)$("#beginBtn").onclick()};
+    v.onplay=setPlay;v.onpause=setPlay;
+    v.onended=()=>{setPlay();endCard();vb.focus();announce("Walkthrough finished. Begin Practice is available.")};
+    v.onloadedmetadata=()=>{seek.max=v.duration||76;box.querySelector("#pTime").textContent=`${fmt(v.currentTime)} / ${fmt(v.duration)}`};
+    v.ontimeupdate=()=>{seek.value=v.currentTime;seek.setAttribute("aria-valuetext",`${fmt(v.currentTime)} of ${fmt(v.duration)}`);box.querySelector("#pTime").textContent=`${fmt(v.currentTime)} / ${fmt(v.duration||76)}`;
       const k=CUES.findIndex(c=>v.currentTime>=c.s&&v.currentTime<c.e);cc.hidden=!ccOn||k<0;if(k>=0)cc.textContent=CUES[k].t;
-      box.querySelectorAll(".tx button").forEach((b,i)=>b.classList.toggle("now",i===k))};
+      box.querySelectorAll(".tx button").forEach((b,i)=>b.classList.toggle("now",i===k));endCard()};
     seek.oninput=()=>{v.currentTime=+seek.value};
     vol.oninput=()=>{v.volume=+vol.value;v.muted=+vol.value===0;lastVol=+vol.value;box.querySelector("#pMute").innerHTML=I(v.muted?"volume_off":"volume_up")};
     box.querySelector("#pMute").onclick=()=>{v.muted=!v.muted;box.querySelector("#pMute").innerHTML=I(v.muted?"volume_off":"volume_up");box.querySelector("#pMute").setAttribute("aria-label",v.muted?"Unmute":"Mute");if(!v.muted&&v.volume===0){v.volume=.8;vol.value=.8}};
     box.querySelector("#pCC").onclick=e=>{ccOn=!ccOn;e.currentTarget.setAttribute("aria-pressed",ccOn);v.ontimeupdate()};
     box.querySelector("#pTx").onclick=e=>{txOn=!txOn;e.currentTarget.setAttribute("aria-pressed",txOn);box.querySelector("#tx").hidden=!txOn};
     box.querySelectorAll(".tx button").forEach(b=>b.onclick=()=>{v.currentTime=CUES[+b.dataset.c].s+.05;if(v.paused)v.play()});
-    box.addEventListener("keydown",e=>{if(e.target.tagName==="INPUT")return;if(e.key===" "||e.key==="k"){e.preventDefault();toggle()}});
+    box.addEventListener("keydown",e=>{if(e.target.closest("input,button,textarea"))return;if(e.key===" "||e.key==="k"){e.preventDefault();toggle()}});
     box.querySelector("#bigPlay").focus()},trigger);
 }
 $("#dWatch").onclick=e=>openPlayer(e.currentTarget);
@@ -731,17 +737,31 @@ function openSummary(){
   $("#sumReset").onclick=resetSandbox;$("#sumFinish").onclick=showFinish;
 }
 function showFinish(){const t=UI.transfer.trim();const el=$("#finish");
-  el.innerHTML=`<div class="fin"><div class="in"><div class="mivamark" style="color:var(--sim-ink)">MIVA</div>
+  el.innerHTML=`<div class="fin"><div class="in"><img class="mivalogo" src="@@LOGO_BLUE@@" alt="Miva Open University" width="966" height="312" style="margin:0 auto">
    <h1 id="finTitle" tabindex="-1" style="font:500 15px/20px var(--fs);letter-spacing:.12em;text-transform:uppercase;color:var(--sim-teal);margin:28px 0 0">Practice complete</h1>
    ${t?`<blockquote>“${esc(t)}”</blockquote><p>That's your first real action this week.</p>`:`<blockquote>You've rehearsed Stream, Classwork and People in a class that doesn't exist.</blockquote>`}
    <p>The safest place to make a first mistake is the sandbox. Come back before your real class goes live.</p>
    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:26px"><button class="simbtn ghost" id="finBack">${I("arrow_back")}Back to summary</button><button class="simbtn" id="finAgain">${I("restart_alt")}Start a fresh sandbox</button></div></div></div>`;
   showScreen("finish");$("#finTitle").focus();$("#finBack").onclick=openSummary;$("#finAgain").onclick=resetSandbox}
 
-/* boot: welcome screen first */
+/* Miva opener: covers the welcome screen on load for ~5 s. Skip, Escape or the timer ends it,
+   then focus moves to Begin Practice. Reduced motion shows the still composition briefly. */
+let openerEnd=null;
+function playOpener(){
+  const o=$("#opener"),w=$("#welcome");if(!o){$("#beginBtn").focus();return}
+  w.inert=true;let t=0;
+  const key=e=>{if(e.key==="Escape"){e.preventDefault();end()}};
+  const end=()=>{if(!openerEnd)return;openerEnd=null;clearTimeout(t);document.removeEventListener("keydown",key,true);o.remove();w.inert=false;$("#beginBtn").focus()};
+  openerEnd=end;document.addEventListener("keydown",key,true);
+  $("#openerSkip").onclick=end;$("#openerSkip").focus();
+  t=setTimeout(end,reduceMotion()?1800:4950);
+}
+
+/* boot: Miva opener, then the welcome screen */
 L.tabsVisited=[];
-showScreen("welcome");$("#beginBtn").focus();
+showScreen("welcome");playOpener();
 /* expose for automated verification only (read-only snapshot) */
 window.__sandbox={state:()=>JSON.parse(JSON.stringify(S)),log:()=>JSON.parse(JSON.stringify(L)),
-  /* UI-only: lets the walkthrough recorder skip the tab intro cards */skipIntros:()=>TABS.forEach(([k])=>{introSeen[k]=true})};
+  /* UI-only: lets the walkthrough recorder skip the tab intro cards */skipIntros:()=>TABS.forEach(([k])=>{introSeen[k]=true}),
+  /* UI-only: ends the opener at once (tests, recorder) */skipOpener:()=>{openerEnd&&openerEnd()}};
 })();

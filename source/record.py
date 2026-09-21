@@ -2,8 +2,10 @@
 import asyncio, json, os, shutil
 from playwright.async_api import async_playwright
 
-URL = "file:///home/claude/sb/dist/local.html"
-OUT = "/home/claude/sb/video/shots"
+HERE = os.path.dirname(os.path.abspath(__file__))
+URL = "file://" + os.path.join(HERE, "dist", "local.html")
+WORK = os.environ.get("VIDEO_WORK", os.path.join(HERE, "video"))  # scratch dir, not committed
+OUT = os.path.join(WORK, "shots")
 S = 4 / 3  # CSS px -> video px (1440x810 css -> 1920x1080)
 
 class Rec:
@@ -81,6 +83,7 @@ async def main():
         ctx = await b.new_context(viewport={"width": 1440, "height": 810}, device_scale_factor=S)
         p = await ctx.new_page()
         await p.goto(URL); await p.wait_for_timeout(600)
+        await p.evaluate("__sandbox.skipOpener()")  # the walkthrough starts on the welcome screen
         await p.evaluate("__sandbox.skipIntros()")  # the walkthrough narration predates the tab intro cards
         await p.add_style_tag(content="*{caret-color:#1F1F1F} .snack{animation:none}")
         r = Rec(p)
@@ -206,11 +209,11 @@ async def main():
         print("checkpoint", round(r.t,2), "->", 87.2); r.wait_until(87.2)
         # end card (rendered in the page with the same fonts)
         await p.evaluate("""(()=>{const d=document.createElement('div');d.id='endcard';d.style.cssText='position:fixed;inset:0;z-index:999;background:#10223C;color:#fff;display:grid;place-items:center;text-align:center;font-family:"Google Sans",Roboto,sans-serif';
-          d.innerHTML='<div><div style="font:700 18px/1 \\'Google Sans\\';letter-spacing:.34em">MIVA</div><div style="font:500 56px/1.1 \\'Google Sans\\';margin:34px 0 26px;letter-spacing:-.01em">Your turn</div><div style="display:inline-flex;align-items:center;gap:10px;background:#D9A53B;color:#1B1403;border-radius:14px;padding:16px 30px;font:500 20px \\'Google Sans\\'">&#9654;&nbsp; Begin Practice</div><div style="margin-top:26px;font:400 16px \\'Google Sans\\';color:#9FB0CC">EDU 101 · The Sandbox Class</div></div>';document.body.appendChild(d)})()""")
+          const logo=document.querySelector('#welcome .mivalogo').src;d.innerHTML='<div><img src="'+logo+'" alt="" style="display:block;height:64px;width:auto;margin:0 auto"><div style="font:500 56px/1.1 \\'Google Sans\\';margin:34px 0 26px;letter-spacing:-.01em">Your turn</div><div style="display:inline-flex;align-items:center;gap:10px;background:#D9A53B;color:#1B1403;border-radius:14px;padding:16px 30px;font:500 20px \\'Google Sans\\'">&#9654;&nbsp; Begin Practice</div><div style="margin-top:26px;font:400 16px \\'Google Sans\\';color:#9FB0CC">EDU 101 · The Sandbox Class</div></div>';document.body.appendChild(d)})()""")
         await p.wait_for_timeout(100)
         endcard = await r.shot(87.6)
         meta = {"images": r.images, "keys": r.keys, "clicks": r.clicks, "end": 90.0, "marks": r.marks, "endcard_t": 87.6}
-        json.dump(meta, open("/home/claude/sb/video/timeline.json", "w"))
+        json.dump(meta, open(os.path.join(WORK, "timeline.json"), "w"))
         print("shots", r.n, "last t", round(r.t, 2))
         await b.close()
 

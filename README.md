@@ -8,26 +8,28 @@ Miva Open University · Interactive and Immersive Learning Team.
 | File | Purpose |
 |---|---|
 | `sandbox-class.html` | The complete simulation in one file. Fonts, icons and the walkthrough video are all embedded, so it runs offline and needs no backend. |
-| `walkthrough/sandbox-walkthrough-1080p.mp4` | 70-second walkthrough at 1920×1080, 30 fps, H.264/AAC. It carries a soft English caption track that is set as the default. |
+| `walkthrough/sandbox-walkthrough-1080p.mp4` | 76-second walkthrough at 1920×1080, 30 fps, H.264/AAC, narrated in Nigerian English. It carries a soft English caption track that is set as the default. |
+| `walkthrough/sandbox-walkthrough-1080p.webm` | The same walkthrough in VP9/Opus. The build embeds both, because browsers without H.264 support (such as open-source Chromium) can only play this one. |
 | `walkthrough/sandbox-walkthrough-1080p-open-captions.mp4` | The same walkthrough with the captions burned in, for players that ignore caption tracks. |
 | `walkthrough/captions.srt`, `walkthrough/captions.vtt` | Caption files. |
 | `walkthrough/transcript.md` | Timed transcript. |
-| `source/` | Source code (`styles.css`, `body.html`, `app.js`), the build script and the verification suites. |
+| `source/` | Source code (`styles.css`, `body.html`, `app.js`), the build script, the verification suites, the Miva logos (`brand/`), the narration (`narration/`) and the video pipeline. |
 
 ## Screen flow
 
-1. **Miva welcome** offers Begin Practice and Watch walkthrough.
-2. **Walkthrough player** plays a recorded demo session and never touches the learner's sandbox. It has Play/Pause, Replay, a seek bar, volume and mute, a captions toggle (on by default) and a clickable transcript. Nothing plays until the learner presses Play.
-3. **EDU 101 workspace** opens straight onto Stream. The first time each tab opens, a Classroom-style intro card plays a short, silent wireframe animation of that tab's key action (posting, filing work under a topic, inviting and adding people). "Got it" closes it. It shows once per tab and can be replayed from Practice Help › What can I do here? Stream, Classwork and People are free to use in any order. The Classroom Home, Calendar, To review, Archived and Settings items give navigation context. The last four show a "not part of this practice" page with a link back to EDU 101.
-4. **Practice Help** offers Watch the walkthrough, Guide me (one action at a time with a spotlight and coach, which the learner can exit at any point) and What can I do here?
-5. **Practice Summary** is labelled "Not a score". It shows the current class state and the actions attempted as separate panels, a self-check for each tab, the transfer prompt, Continue Practice (to any tab), Reset Sandbox and Finish.
-6. **Finish** shows the learner's transfer sentence and a closing reminder.
+1. **Miva opener** plays once when the page loads: about 5 seconds, silent. The emblem sharpens into view, the wordmark slides out from behind it, a light sweeps across the logo, and the course title rises before it fades into the welcome screen. Skip intro and Escape end it at once. With reduced motion it shows the finished composition briefly instead.
+2. **Miva welcome** offers Begin Practice and Watch walkthrough.
+3. **Walkthrough player** plays a recorded demo session and never touches the learner's sandbox. It has Play/Pause, Replay, a seek bar, volume and mute, a captions toggle (on by default) and a clickable transcript. Nothing plays until the learner presses Play. When the walkthrough reaches its end card, the Begin Practice button drawn in the video becomes a real button: from the welcome screen it starts practice, and from inside the practice it closes the walkthrough.
+4. **EDU 101 workspace** opens straight onto Stream. The first time each tab opens, a Classroom-style intro card plays a short, silent wireframe animation of that tab's key action (posting, filing work under a topic, inviting and adding people). "Got it" closes it. It shows once per tab and can be replayed from Practice Help › What can I do here? Stream, Classwork and People are free to use in any order. The Classroom Home, Calendar, To review, Archived and Settings items give navigation context. The last four show a "not part of this practice" page with a link back to EDU 101.
+5. **Practice Help** offers Watch the walkthrough, Guide me (one action at a time with a spotlight and coach, which the learner can exit at any point) and What can I do here?
+6. **Practice Summary** is labelled "Not a score". It shows the current class state and the actions attempted as separate panels, a self-check for each tab, the transfer prompt, Continue Practice (to any tab), Reset Sandbox and Finish.
+7. **Finish** shows the learner's transfer sentence and a closing reminder.
 
 ## Fidelity register
 
 | Area | Reference | Status |
 |---|---|---|
-| App shell: top bar, drawer and rail, active pill, colours, type, spacing | Home screenshot, plus live-DOM measurements from the Sep 2026 capture | **Reference-backed** |
+| App shell: top bar, drawer and rail, active pill, colours, type, spacing | Home screenshot, plus live-DOM measurements from the Sep 2026 capture | **Reference-backed**, except that the Google Classroom logo is replaced by the Miva logo |
 | Home Classes card grid and class card | Home screenshot | **Reference-backed** (the owner card's footer icons are provisional) |
 | Class tabs, banner, left column, Stream item and post cards | Student-view capture only | **Provisional**: teacher-view Stream (composer, class code card) needs a teacher reference |
 | Classwork rows, topic headers, Create menu, assignment editor | Student-view capture plus standard Classroom behaviour | **Provisional**: the Create menu lists Assignment and Topic only |
@@ -48,9 +50,10 @@ Miva Open University · Interactive and Immersive Learning Team.
 
 **Assets.**
 
+- **Logo:** the Miva Open University logo, in `source/brand/`. The blue version is used on light backgrounds (the top bar and the Finish screen) and the white version on dark ones (the welcome panel and the walkthrough end card). It replaces the Google Classroom logo and the old "MIVA · Open University · Interactive and Immersive Learning" text mark.
 - **Fonts:** Google Sans, Google Sans Flex and Roboto, from Fontsource under the OFL.
 - **Icons:** a subset of Material Symbols Outlined, under Apache-2.0.
-- **Not included:** Google's banner art and illustrations are not reproduced. The banner, logo tile and empty-state art are drawn generically.
+- **Not included:** Google's logo, banner art and illustrations are not reproduced. The banner and empty-state art are drawn generically.
 
 ## Sandbox logic
 
@@ -72,7 +75,7 @@ Miva Open University · Interactive and Immersive Learning Team.
 
 ## Verification
 
-The suite has **62** checks (51 original, 9 for the tab intro cards, 2 for assignment-edit logging) (`source/test/verify.py`), plus a player check. They cover:
+The suite has **66** checks (51 original, 9 for the tab intro cards, 2 for assignment-edit logging, 4 for the opener) (`source/test/verify.py`), plus a player check. They cover:
 
 - seeded state
 - empty and whitespace-only input blocked everywhere
@@ -94,12 +97,13 @@ The suite has **62** checks (51 original, 9 for the tab intro cards, 2 for assig
 - an assignment edit that also changes the topic is logged as one action, not two
 - no localStorage use and no JS errors
 
-The player check confirmed the video loads (70 s), stays paused on open, and that seeking, captions and the transcript work.
+The player check confirmed the video loads (76 s), that the end card's Begin Practice button appears, takes focus when the video ends and starts practice, stays paused on open, and that seeking, captions and the transcript work.
 
 ## Walkthrough production notes
 
 - **Recording:** the real build was recorded in a separate headless demo session at 1440×810 CSS px with a device-pixel ratio of 4/3, which gives 1920×1080 frames. The interface was not redrawn or generated.
-- **Pacing (Sep 2026):** the original cut ran 90 s, of which 40 s had no narration because on-screen actions played out in real time. The stretches between narrated lines were sped up (1.8×, or 2.5× for gaps over 6 s) and the narrated lines left at their original speed, giving 70 s. Captions, the transcript and `cues.json` were regenerated from the new timings, and the open-caption version was re-burned from the same master. Re-running `record.py` and `compose.py` from scratch would need the narration audio and frame timeline, which are not in this package.
+- **Re-recorded (21 Sep 2026)** so the footage shows the Miva logo instead of the Google Classroom logo, with a new Nigerian English narrator.
+- **Pipeline** (run from `source/`, after `python3 build.py`): `record.py` records the build into `source/video/`; then, from `source/video/`, `schedule.py` places each narrated line against the actions, `compose.py` adds the cursor, click rings, captions and audio, and `pace.py` shortens the silent stretches (1.8×, or 2.5× for gaps over 6 s; narrated lines keep their speed). The composed cut runs 92 s and the paced one 76 s. Rebuild the page with `python3 build.py ../walkthrough/sandbox-walkthrough-1080p.mp4`.
 - **Cursor and camera:** the cursor path and click rings were composited afterwards, and the camera stays fixed.
-- **Narration:** a synthetic voice (Kokoro, af_heart) reads the script word for word. Each sentence is timed to its on-screen action. Replace it with a recorded voiceover if preferred, since the captions and timings are in `captions.srt`.
+- **Narration:** a synthetic Nigerian English voice (ElevenLabs "Ifeoma Odumodu - Nigerian Narrator", `eleven_multilingual_v2`, stability 0.6, similarity 0.8) reads the script word for word, one file per line in `source/narration/`. To use a recorded voiceover instead, replace those 17 files and rerun the pipeline from `schedule.py`; the timings follow the new audio.
 - **Names and addresses:** all identities are fictional (Ada Okafor, tutor@example.com).

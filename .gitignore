@@ -10,3 +10,6 @@ source/test/player.png
 
 .DS_Store
 __pycache__/
+
+# Video work dir (record.py, schedule.py, compose.py, pace.py)
+source/video/

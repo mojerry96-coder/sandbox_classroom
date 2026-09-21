@@ -1,10 +1,22 @@
 <div id="live" class="sr" aria-live="polite" aria-atomic="true"></div>
 
+<!-- ======================= MIVA OPENER (plays once on load, then reveals the welcome screen) ======================= -->
+<div id="opener">
+  <span class="op-ring" aria-hidden="true"></span>
+  <div class="op-stage" role="img" aria-label="Miva Open University presents The Sandbox Class">
+    <div class="op-logo"><img src="@@LOGO_WHITE@@" alt="" width="966" height="312"><span class="op-shine" style="-webkit-mask-image:url(@@LOGO_WHITE@@);mask-image:url(@@LOGO_WHITE@@)"></span></div>
+    <span class="op-rule"></span>
+    <div class="op-course">DT01 · DT 01 03 · Practice simulation</div>
+    <div class="op-title">The Sandbox Class</div>
+  </div>
+  <button class="op-skip" id="openerSkip">Skip intro</button>
+</div>
+
 <!-- ======================= MIVA WELCOME (simulation layer) ======================= -->
 <section id="welcome" class="miva" aria-labelledby="wTitle">
   <div class="welcome">
     <div class="w-left">
-      <div class="mivamark">MIVA<small>Open University · Interactive and Immersive Learning</small></div>
+      <img class="mivalogo" src="@@LOGO_WHITE@@" alt="Miva Open University" width="966" height="312">
       <div>
         <div class="course">DT01 · DT 01 03 · Practice simulation</div>
         <h1 id="wTitle">The Sandbox Class</h1>
@@ -30,7 +42,7 @@
 <div id="shell" hidden>
   <header class="topbar" id="topbar">
     <button class="ib" id="hamb" aria-label="Main menu" aria-expanded="true" aria-controls="drawer">@@I:menu@@</button>
-    <a class="brand" href="#" id="brandLink"><svg class="logo" viewBox="0 0 28 28" aria-hidden="true"><rect x="1" y="3" width="26" height="22" rx="2" fill="#F9AB00"/><rect x="3.5" y="5.5" width="21" height="17" rx="1" fill="#1E8E3E"/><circle cx="14" cy="11.5" r="2.6" fill="#fff"/><path d="M8.8 19.6c.6-2.6 2.7-4.2 5.2-4.2s4.6 1.6 5.2 4.2z" fill="#fff"/><rect x="17" y="22.5" width="6" height="2.5" fill="#fff"/></svg>Classroom</a>
+    <a class="brand" href="#" id="brandLink"><img class="logo" src="@@LOGO_BLUE@@" alt="Miva Open University" width="966" height="312">Classroom</a>
     <div class="crumb" id="crumb"></div>
     <span class="sp"></span>
     <span id="topact"></span>
