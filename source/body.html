@@ -1,0 +1,56 @@
+<div id="live" class="sr" aria-live="polite" aria-atomic="true"></div>
+
+<!-- ======================= MIVA WELCOME (simulation layer) ======================= -->
+<section id="welcome" class="miva" aria-labelledby="wTitle">
+  <div class="welcome">
+    <div class="w-left">
+      <div class="mivamark">MIVA<small>Open University · Interactive and Immersive Learning</small></div>
+      <div>
+        <div class="course">DT01 · DT 01 03 · Practice simulation</div>
+        <h1 id="wTitle">The Sandbox Class</h1>
+        <p class="lead">Practise Stream, Classwork and People in EDU 101, a fictional class where nothing reaches real students.</p>
+      </div>
+    </div>
+    <div class="w-right">
+      <ul>
+        <li>@@I:swap_horiz@@<span>Open the three tabs in any order, as often as you like.</span></li>
+        <li>@@I:undo@@<span>Edit, remove or reset anything you create.</span></li>
+        <li>@@I:task_alt@@<span>No score, timer or checklist. Help is there when you want it.</span></li>
+      </ul>
+      <div class="ctas">
+        <button class="simbtn gold lg" id="beginBtn">@@I:play_arrow@@Begin Practice</button>
+        <button class="simbtn ghost lg" id="welcomeWatch">@@I:smart_display@@Watch walkthrough</button>
+      </div>
+      <p class="fine">About 8–12 minutes for one rehearsal. Refreshing the page starts a fresh sandbox.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= CLASSROOM SHELL (reference-accurate layer) ======================= -->
+<div id="shell" hidden>
+  <header class="topbar" id="topbar">
+    <button class="ib" id="hamb" aria-label="Main menu" aria-expanded="true" aria-controls="drawer">@@I:menu@@</button>
+    <a class="brand" href="#" id="brandLink"><svg class="logo" viewBox="0 0 28 28" aria-hidden="true"><rect x="1" y="3" width="26" height="22" rx="2" fill="#F9AB00"/><rect x="3.5" y="5.5" width="21" height="17" rx="1" fill="#1E8E3E"/><circle cx="14" cy="11.5" r="2.6" fill="#fff"/><path d="M8.8 19.6c.6-2.6 2.7-4.2 5.2-4.2s4.6 1.6 5.2 4.2z" fill="#fff"/><rect x="17" y="22.5" width="6" height="2.5" fill="#fff"/></svg>Classroom</a>
+    <div class="crumb" id="crumb"></div>
+    <span class="sp"></span>
+    <span id="topact"></span>
+    <span class="ib" aria-hidden="true"><span class="avatar">Y</span></span>
+  </header>
+  <nav id="drawer" aria-label="Main navigation"></nav>
+  <main id="main" tabindex="-1"></main>
+</div>
+
+<!-- ======================= SIMULATION DOCK (added controls, visually distinct) ======================= -->
+<div id="dock" role="region" aria-label="Simulation controls" hidden>
+  <span class="ind"><span class="dot" aria-hidden="true"></span><span>Sandbox<span class="long"> — no real messages are sent</span></span></span>
+  <button id="dHelp" aria-label="Practice Help">@@I:help_center@@<span class="lbl">Practice Help</span></button>
+  <button id="dWatch" aria-label="Watch walkthrough">@@I:smart_display@@<span class="lbl">Watch walkthrough</span></button>
+  <button id="dReset" aria-label="Reset Sandbox">@@I:restart_alt@@<span class="lbl">Reset Sandbox</span></button>
+  <button id="dEnd" class="end" aria-label="End Practice">@@I:flag@@<span class="lbl">End Practice</span></button>
+</div>
+
+<div id="spot" hidden></div>
+<div id="coach" role="dialog" aria-modal="false" aria-labelledby="coachK" hidden></div>
+
+<section id="summary" class="miva" hidden aria-labelledby="sumTitle"></section>
+<section id="finish" class="miva" hidden aria-labelledby="finTitle"></section>

@@ -1,0 +1,12 @@
+# Build output (regenerate with: cd source && python3 build.py path/to/clean.mp4)
+source/dist/
+
+# Video pipeline and test scratch files
+source/timeline.json
+source/mix.wav
+source/clean.mp4
+source/burned.mp4
+source/test/player.png
+
+.DS_Store
+__pycache__/
