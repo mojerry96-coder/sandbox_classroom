@@ -632,17 +632,18 @@ $("#dHelp").onclick=e=>openHelp(e.currentTarget);
 
 /* ======================================================================
    WALKTHROUGH PLAYER — recorded video of a separate demo session.
-   Playing it never touches S or L. No autoplay.
+   Playing it never touches S or L. It starts on its own only straight after the opener
+   (openPlayer with auto); opened from Watch walkthrough, it waits for Play.
    ====================================================================== */
 const fmt=t=>{t=Math.max(0,Math.floor(t||0));return Math.floor(t/60)+":"+String(t%60).padStart(2,"0")};
 let ccOn=true,txOn=false,lastVol=1;
-function openPlayer(trigger){
+function openPlayer(trigger,opts={}){
   Guide.exit(true);
   const has=!!VIDEO_SRC&&!VIDEO_SRC.startsWith("/*");
   const ref=makeModal("simscrim","player","plT",`
     <div class="ph2"><h2 id="plT">Walkthrough · The Sandbox Class</h2><button class="ib" id="plX" aria-label="Close walkthrough">${I("close")}</button></div>
     <div class="vwrap">${has?`<video id="vid" preload="metadata" playsinline aria-label="Walkthrough video, 76 seconds, showing the sandbox in use">${VIDEO_WEBM.startsWith("data:")?`<source src="${VIDEO_WEBM}" type="video/webm">`:""}<source src="${VIDEO_SRC}" type="video/mp4"></video>
-       <div class="cc" id="cc" hidden></div><button class="vbegin" id="vBegin" hidden>${I("play_arrow","fill")}Begin Practice</button><div class="big" id="big"><button id="bigPlay" aria-label="Play walkthrough">${I("play_arrow","fill")}</button></div>`
+       <div class="cc" id="cc" hidden></div><button class="vunmute" id="vUnmute" hidden>${I("volume_off")}Turn on sound</button><button class="vbegin" id="vBegin" hidden>${I("play_arrow","fill")}Begin Practice</button><div class="big" id="big"><button id="bigPlay" aria-label="Play walkthrough">${I("play_arrow","fill")}</button></div>`
        :`<div class="nov">The walkthrough video isn't included in this build. Use Practice Help › Guide me instead.</div>`}</div>
     ${has?`<div class="pctl">
       <button class="ib" id="pPlay" aria-label="Play">${I("play_arrow","fill")}</button>
@@ -675,12 +676,22 @@ function openPlayer(trigger){
       box.querySelectorAll(".tx button").forEach((b,i)=>b.classList.toggle("now",i===k));endCard()};
     seek.oninput=()=>{v.currentTime=+seek.value};
     vol.oninput=()=>{v.volume=+vol.value;v.muted=+vol.value===0;lastVol=+vol.value;box.querySelector("#pMute").innerHTML=I(v.muted?"volume_off":"volume_up")};
-    box.querySelector("#pMute").onclick=()=>{v.muted=!v.muted;box.querySelector("#pMute").innerHTML=I(v.muted?"volume_off":"volume_up");box.querySelector("#pMute").setAttribute("aria-label",v.muted?"Unmute":"Mute");if(!v.muted&&v.volume===0){v.volume=.8;vol.value=.8}};
+    const vu=box.querySelector("#vUnmute");
+    const syncMute=()=>{box.querySelector("#pMute").innerHTML=I(v.muted?"volume_off":"volume_up");box.querySelector("#pMute").setAttribute("aria-label",v.muted?"Unmute":"Mute");if(!v.muted)vu.hidden=true};
+    v.onvolumechange=syncMute;
+    box.querySelector("#pMute").onclick=()=>{v.muted=!v.muted;if(!v.muted&&v.volume===0){v.volume=.8;vol.value=.8}};
+    vu.onclick=()=>{v.muted=false;if(v.volume===0){v.volume=.8;vol.value=.8}box.querySelector("#pPlay").focus()};
     box.querySelector("#pCC").onclick=e=>{ccOn=!ccOn;e.currentTarget.setAttribute("aria-pressed",ccOn);v.ontimeupdate()};
     box.querySelector("#pTx").onclick=e=>{txOn=!txOn;e.currentTarget.setAttribute("aria-pressed",txOn);box.querySelector("#tx").hidden=!txOn};
     box.querySelectorAll(".tx button").forEach(b=>b.onclick=()=>{v.currentTime=CUES[+b.dataset.c].s+.05;if(v.paused)v.play()});
     box.addEventListener("keydown",e=>{if(e.target.closest("input,button,textarea"))return;if(e.key===" "||e.key==="k"){e.preventDefault();toggle()}});
-    box.querySelector("#bigPlay").focus()},trigger);
+    box.querySelector("#bigPlay").focus();
+    /* Straight after the opener: start playing. Browsers only allow sound after the learner has
+       clicked something (e.g. Skip intro); otherwise start muted with captions and offer sound. */
+    if(opts.auto){
+      const started=()=>{box.querySelector("#pPlay").focus();announce(v.muted?"Walkthrough playing without sound, with captions. Turn on sound is available. Press Escape to close.":"Walkthrough playing. Press Escape to close.")};
+      v.play().then(started).catch(()=>{v.muted=true;v.play().then(()=>{vu.hidden=false;started();vu.focus()}).catch(()=>{})});
+    }},trigger);
 }
 $("#dWatch").onclick=e=>openPlayer(e.currentTarget);
 
@@ -751,9 +762,12 @@ function playOpener(){
   const o=$("#opener"),w=$("#welcome");if(!o){$("#beginBtn").focus();return}
   w.inert=true;let t=0;
   const key=e=>{if(e.key==="Escape"){e.preventDefault();end()}};
-  const end=()=>{if(!openerEnd)return;openerEnd=null;clearTimeout(t);document.removeEventListener("keydown",key,true);o.remove();w.inert=false;$("#beginBtn").focus()};
+  /* when it ends, the walkthrough opens and plays (not under reduced motion, and not if this build has no video) */
+  const end=(walkthrough=true)=>{if(!openerEnd)return;openerEnd=null;clearTimeout(t);document.removeEventListener("keydown",key,true);o.remove();w.inert=false;
+    const hasVideo=!!VIDEO_SRC&&!VIDEO_SRC.startsWith("/*");
+    if(walkthrough&&hasVideo){openPlayer($("#beginBtn"),{auto:!reduceMotion()})}else $("#beginBtn").focus()};
   openerEnd=end;document.addEventListener("keydown",key,true);
-  $("#openerSkip").onclick=end;$("#openerSkip").focus();
+  $("#openerSkip").onclick=()=>end();$("#openerSkip").focus();
   t=setTimeout(end,reduceMotion()?1800:4950);
 }
 
@@ -763,5 +777,5 @@ showScreen("welcome");playOpener();
 /* expose for automated verification only (read-only snapshot) */
 window.__sandbox={state:()=>JSON.parse(JSON.stringify(S)),log:()=>JSON.parse(JSON.stringify(L)),
   /* UI-only: lets the walkthrough recorder skip the tab intro cards */skipIntros:()=>TABS.forEach(([k])=>{introSeen[k]=true}),
-  /* UI-only: ends the opener at once (tests, recorder) */skipOpener:()=>{openerEnd&&openerEnd()}};
+  /* UI-only: ends the opener at once (tests, recorder) */skipOpener:()=>{openerEnd&&openerEnd(false)}};
 })();
