@@ -21,9 +21,12 @@ This is a single-file training simulation, the Miva DT01 · DT 01 03 Google Clas
   - Paths are relative to this folder, so it runs as-is from here.
 - `fonts/`: the Google Sans, Google Sans Flex and Roboto woff2 files, `afacad-var.woff2` (the opener title) and `ms-sub.woff2`, a Material Symbols subset.
   - **Adding a new icon:** add its name to the list in `sub.py`, rerun it (it needs the full Material Symbols woff2 from `npm pack @fontsource-variable/material-symbols-outlined`), and rebuild. The `I("name")` helper returns nothing for icons that aren't in `icons.json`.
-- `test/verify.py`: Playwright functional suite (69 checks). Build first; the tests load `dist/local.html`. `test/player.py` checks the walkthrough player.
+- `test/verify.py`: Playwright functional suite (77 checks). Build first; the tests load `dist/local.html`. `test/player.py` checks the walkthrough player.
 - Video pipeline (work dir `video/`, not committed): `record.py` records the real build as screenshots plus a cursor timeline; `schedule.py` places the narration (`narration/s1-17.wav`) against the recorded marks; `compose.py` composites cursor, captions and audio; `pace.py` shortens silent gaps and writes `paced-cues.json`, which becomes `cues.json`. Needs numpy, soundfile, Pillow and `video/gs500.ttf` (Google Sans 500 converted from the woff2 with fontTools).
 - `brand/`: the Miva logos (blue on light, white on dark; the practice's own screens only — the Classroom shell uses a neutral mortarboard tile instead), the opener artwork (`ekiti.svg`, `miva.svg`, `tof.svg`, `chevrons.svg`) and the house spec `OPENER.md`. `build.py` inlines all of them for the `@@LOGO_*@@` tokens in `body.html`, `app.js` and `styles.css` (the chevron motif is a CSS background).
+
+- `reference/`: the Google Classroom clone reference pack (SPEC.md, CHECKLIST.md, data/*.json), measured from the live product on 23 Sep 2026. Build against it; `data/tokens.json` is the source of truth for colour, type, shape and sizing.
+  - Its house rule, and the easiest thing to get wrong: **menus and dialogs carry no box-shadow**. Depth is tonal surface plus scrim.
 
 ## Rules from the storyboard/brief (don't break)
 - No backend, no localStorage, and no real email. Refresh or Reset gives a fresh seed with a new class code.

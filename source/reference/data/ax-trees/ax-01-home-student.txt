@@ -1,0 +1,56 @@
+# ACCESSIBILITY TREE — Home (/h), account enrolled as STUDENT in 1 class, no classes taught
+# Viewport 971x715, captured 2026-09-23
+# Nav drawer EXPANDED (modal/standard drawer state)
+
+link "Skip to main content"
+navigation "Titlebar navigation"
+ button "Main Menu"            -> tooltip "Main Menu"
+ heading "Classroom" > link href="/h" > image "Google Classroom" + text "Classroom"
+ button "Create or join a class"  > icon "add"   -> tooltip "Create or join a class"
+   menu "Add course"
+     menuitem > "Join class"
+     menuitem > "Create class"
+ button "Join class" > icon "add"   -> tooltip "Join class"   [variant shown when user teaches nothing]
+ button "Google apps"  href=google.com/intl/en/about/products
+ button "Google Account: <Name> (<email>)"
+navigation  (left drawer)
+ menu
+  menuitem "Home"              href="/h"
+  menuitem "Calendar"          href="/calendar/this-week/course/all"
+  separator
+  menuitem "Enrolled"          (section header, expandable)
+  group "Enrolled"
+   menuitem "To-do"            href="/a/not-turned-in/all"
+   menuitem "<Class name>"     href="/c/<courseId>"
+  separator
+  menuitem "Archived classes"  href="/h/archived"
+  menuitem "Settings"          href="/s"
+main
+ heading "Due soon"
+   link "View To-do"                href="/a/not-turned-in/all"
+   button "Expand Due soon section"  icon "expand_content"  -> tooltip "Expand"
+   text  "You don't have any work due in the next 7 days"     [EMPTY STATE]
+ heading "Class learning tools"
+   button "Gems and Notebooks that have been recently posted by your teachers" icon "info"
+   button "Collapse Class learning tools section" icon "collapse_content" -> tooltip "Collapse"
+   text "You don't have any assigned class learning tools"     [EMPTY STATE]
+ heading "Classes"
+   button "Create or join a class" icon "add" + label "Add class"
+     menu "Add course" > "Join class" | "Create class"
+   list
+    listitem  (CLASS CARD, student role)
+      link href="/c/<id>"                         (banner click target)
+      heading "<Class name>" > link > text
+      text "<Section / subtitle>"
+      text "No work due soon"
+      text "Woohoo, no work due soon!"
+      link "Open your work for \"<Class>\""  href="/c/<id>/sp/<studentId>/all/default"
+      link "Open folder for \"<Class>\" in Google Drive" href="https://drive.google.com/drive/folders/<id>"
+      button "Class options for <Class>" icon "more_vert" -> tooltip "More options"
+        menu "Class options menu"
+          menuitem "Hide"        -> tooltip "Hide and silence this class."
+          menuitem "Unenroll"    -> tooltip "Removes you from this class."
+          separator
+          menuitem "Report abuse"
+contentinfo
+ button "Help and Feedback"   (fixed bottom-right FAB, 48x48, radius 24px, bg rgba(255,255,255,.85))

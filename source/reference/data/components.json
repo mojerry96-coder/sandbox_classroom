@@ -1,0 +1,119 @@
+{
+  "_meta": "Component inventory with real measured metrics. Sizes in CSS px as measured at a 971-1000px viewport unless stated.",
+
+  "components": [
+
+    { "id": "TopAppBar", "height": 65, "bg": "#F8FAFD", "position": "fixed", "zIndex": "above content",
+      "slots": ["hamburger (40px icon button, 24px glyph)", "product logo 32px + wordmark 24px", "chevron_right + class name/section (only inside a class)", "+ create/join (40px)", "Google apps (40px)", "avatar (32px)"],
+      "classTitle": { "fontSize": 16, "weight": 500, "color": "#444746" },
+      "classSection": { "fontSize": 12, "weight": 400, "color": "#444746" },
+      "logoX": 64, "logoY": 16, "logoSize": [164, 32] },
+
+    { "id": "NavDrawer", "expandedWidth": 347, "railWidth": 72, "bg": "#F8FAFD",
+      "item": { "height": 48, "iconSize": 24, "labelSize": 14, "paddingLeft": 16, "gapIconLabel": 20 },
+      "activeItem": { "bg": "#D3E3FD", "radius": 9999, "color": "#0B57D0" },
+      "railActiveItem": { "bg": "#C2E7FF", "radius": "0 20px 20px 0", "pillSize": [52, 32], "iconColor": "#004A77" },
+      "groupHeader": { "label": "Teaching / Enrolled", "icon": 24, "trailing": "expand chevron", "weight": 500 },
+      "classItem": { "leading": "24px circle avatar with the class initial, bg #E8F0FE, color #0B57D0", "twoLine": true },
+      "separator": "1px #DADCE0 with 8px margins" },
+
+    { "id": "ClassTabBar", "height": 65, "bg": "#FFFFFF",
+      "tab": { "width": 95, "height": 48, "fontSize": 14, "weight": 500 },
+      "active": { "color": "#0B57D0", "indicator": "3px bottom border, #0B57D0, matched to the tab width" },
+      "inactive": { "color": "#444746", "weight": 400 },
+      "trailing": ["Google Calendar link", "Class Drive folder link", "Class settings (gear)", "More options (⋮) at narrow widths"] },
+
+    { "id": "Card", "bg": "#FFFFFF", "radius": 28, "padding": "8px 24px 24px",
+      "variants": { "homeSection": { "radius": 28 }, "outlined": { "border": "1px solid #DADCE0", "radius": 12 }, "tonal": { "bg": "#DDE3EA", "radius": 12 } } },
+
+    { "id": "ClassCard", "size": [292, 296], "radius": 12, "border": "1px solid #DADCE0", "bg": "#FFFFFF",
+      "banner": { "height": 100, "content": "theme image / colour, title (white, 22px, 2-line clamp), section (white, 13px)" },
+      "avatar": { "size": 64, "position": "overlapping the banner bottom-right, 24px from the right edge", "ring": "4px white" },
+      "footer": { "height": 52, "borderTop": "1px solid #DADCE0", "content": "2 icon buttons + overflow, right-aligned, 40px each" } },
+
+    { "id": "Button",
+      "filled": { "height": 40, "radius": 9999, "bg": "#1B57D0", "color": "#FFFFFF", "padding": "0 24px", "fontSize": 14, "disabled": { "bg": "#E3E3E3", "color": "#9AA0A6" } },
+      "filledTonal": { "height": 40, "radius": 20, "bg": "#C2E7FF or #D3E3FD", "color": "#001D35 / #0B57D0", "padding": "0 16px", "iconGap": 8 },
+      "outlined": { "height": 40, "radius": 9999, "border": "1px solid #C4C7C5", "color": "#0B57D0", "bg": "transparent" },
+      "text": { "height": 40, "radius": 9999, "color": "#0B57D0", "padding": "0 12px" },
+      "icon": { "size": 40, "glyph": 24, "radius": "50%", "hover": "8% on-surface state layer" },
+      "splitButton": { "primary": "filled, radius 9999 0 0 9999", "caret": "filled, radius 0 9999 9999 0, 1px divider between, 40px wide" },
+      "fab": { "size": 48, "radius": 24, "bg": "rgba(255,255,255,0.85)", "position": "fixed bottom-right, 16px inset, zIndex 9999" } },
+
+    { "id": "SegmentedControl", "height": 48, "radius": 9999, "border": "1px solid #C4C7C5",
+      "segment": { "padding": "0 20px", "fontSize": 14 },
+      "selected": { "bg": "#D3E3FD", "leadingIcon": "check", "color": "#0B57D0" },
+      "unselected": { "leadingIcon": "the segment's own icon", "color": "#1F1F1F" } },
+
+    { "id": "TextFieldFilled", "size": [512, 56], "bg": "#DDE3EA", "radius": "4px 4px 0 0",
+      "input": { "height": 24, "fontSize": 16, "paddingX": 16 },
+      "label": { "rest": "16px, #444746, vertically centred", "floated": "13px, near the top of the field" },
+      "indicator": { "rest": "1px #444746", "focus": "2px #0B57D0", "error": "2px #B3261E" },
+      "focusLabelColor": "#0B57D0",
+      "errorLabelColor": "#B3261E",
+      "helper": { "fontSize": 12, "marginTop": 4, "paddingX": 16, "errorColor": "#B3261E" },
+      "verticalPitch": 72 },
+
+    { "id": "TextFieldOutlined", "height": 56, "radius": 4, "border": "1px solid #C4C7C5",
+      "use": "Join class 'Class code', Calendar/To-do 'All classes' filter" },
+
+    { "id": "Select", "height": 56, "trailing": "caret 24px",
+      "widths": { "classSettingsStream": 320, "gradeCalculation": 200, "assignmentPoints": 172 },
+      "menu": { "bg": "#F0F4F9", "radius": 4, "padding": "8px 0", "shadow": "none" } },
+
+    { "id": "Menu", "bg": "#F0F4F9", "radius": 4, "padding": "8px 0", "shadow": "none", "minWidth": "fits content",
+      "item": { "comfortable": { "height": 48, "padding": "8px 12px", "fontSize": 16 },
+                "dense": { "height": 38, "padding": "8px 12px", "fontSize": 16, "leadingIcon": 20 } },
+      "separator": "1px #DADCE0, 8px vertical margin",
+      "badge": "blue pill, white 11px text (e.g. 'New' on Vids)" },
+
+    { "id": "Dialog", "bg": "#E9EEF6", "radius": 28, "padding": 24, "shadow": "none",
+      "scrim": "rgba(0,0,0,0.5)",
+      "title": { "fontSize": 24, "weight": 400, "marginBottom": 24 },
+      "footer": { "align": "right", "gap": 8, "marginTop": 24 },
+      "sizes": { "consumerGate": [514, 390], "createClass": [560, 548], "customizeAppearance": [712, 538], "selectClassTheme": [622, 546], "announceTo": [528, 472], "classSettingsNarrow": [513, 381] },
+      "fullScreenVariant": { "use": "Class settings, Assignment editor", "topBarHeight": 74, "layout": "X + icon + title on the left, primary action on the right; scrolling body on #FFFFFF/#F8FAFD" } },
+
+    { "id": "Switch", "size": [52, 32],
+      "on": { "track": "#1B57D0", "thumb": "24px white, offset right" },
+      "off": { "track": "#E3E3E3 with a 2px #79747E outline", "thumb": "16px #79747E, offset left" } },
+
+    { "id": "Checkbox", "size": 18, "radius": 2, "border": "2px #444746",
+      "checked": { "bg": "#1B57D0", "glyph": "white check" },
+      "stateLayer": "40px circular halo on hover/focus" },
+
+    { "id": "AttachButton", "size": 56, "radius": "50%", "border": "1px solid #C4C7C5", "bg": "transparent",
+      "glyph": "24px brand-coloured product icon", "label": { "fontSize": 14, "marginTop": 8, "color": "#1F1F1F" },
+      "row": { "gap": 46, "justify": "center" },
+      "composerVariant": { "size": 40, "labelless": true } },
+
+    { "id": "ThemeSwatch", "size": 64, "radius": "50%", "border": "2px solid <ring colour>",
+      "selected": "check glyph in the ring colour, fill unchanged", "gap": 20 },
+
+    { "id": "ThemeTile", "size": [325, 111], "radius": 12, "role": "option", "grid": "2 columns, 4px gaps" },
+
+    { "id": "StreamPostCondensed", "size": [571, 72], "radius": 12, "bg": "#DDE3EA", "padding": "8px 0",
+      "anatomy": "leading type icon (40px circle) · one-line summary (14px) · date (12px, #444746) · more_vert (40px)" },
+
+    { "id": "EmptyState", "align": "center", "maxWidth": 420,
+      "illustration": { "size": "~200x160", "style": "grey line art with one or two flat mid-grey fills; occasional Google-blue accent" },
+      "title": { "fontSize": 22, "weight": 400, "color": "#1F1F1F", "marginTop": 24 },
+      "body": { "fontSize": 14, "color": "#444746", "marginTop": 8 },
+      "action": { "marginTop": 24, "style": "outlined button or text link" } },
+
+    { "id": "LinearProgress", "height": 4, "track": "#C2E7FF", "indicator": "#1B57D0", "behaviour": "indeterminate, pinned directly under the top app bar" },
+
+    { "id": "CircularProgress", "size": 48, "stroke": 4, "color": "#1B57D0", "behaviour": "indeterminate" },
+
+    { "id": "Skeleton", "shapes": ["40px grey circle for avatars", "rounded pills of varying width for text lines"], "color": "#E8EAED", "radius": 9999 },
+
+    { "id": "Tooltip", "bg": "#3C4043", "color": "#FFFFFF", "fontSize": 12, "radius": 4, "padding": "6px 8px",
+      "note": "Nearly every icon button in Classroom carries one — the aria-labels in the ax-trees double as tooltip text." }
+  ],
+
+  "iconSet": {
+    "family": "Material Symbols (Google Symbols), rounded/outlined, weight 400, optical size 24",
+    "namesSeenInDom": ["add", "info", "expand_content", "collapse_content", "more_vert", "edit", "repeat", "link", "content_copy", "restart_alt", "disabled_by_default", "supervisor_account", "school", "settings", "person_add", "assignment", "help", "book", "subject", "calendar_today", "upload", "image", "check", "chevron_right", "keyboard_arrow_down", "close"],
+    "cloneNote": "Material Symbols is open source (Apache 2.0) — you can use the real icons. The Classroom LOGO is not; draw your own."
+  }
+}

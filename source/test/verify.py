@@ -85,6 +85,31 @@ async def main():
     ok("intro illustration has a text alternative",bool(await pg.get_attribute(".iv[role=img]","aria-label")))
     await pg.click("#introOk"); await pg.wait_for_timeout(100)
     ok("intro closes, focus returns to tab, state untouched",await pg.evaluate("document.activeElement.id")=="tab-stream" and json.dumps(await st())==json.dumps(s0))
+    # FOUNDATIONS against the reference pack (data/tokens.json, CHECKLIST.md)
+    shell=await pg.evaluate("""(()=>{const cs=(s,p)=>getComputedStyle(document.querySelector(s))[p];
+      const r=s=>document.querySelector(s).getBoundingClientRect();
+      return {bar:Math.round(r('.topbar').height),drawer:Math.round(r('#drawer').width),
+        canvas:cs('.sheet','borderTopLeftRadius'),tracking:cs('body','letterSpacing'),
+        pill:cs('.ni.act','backgroundColor'),fab:Math.round(r('.fab').width),fabBg:cs('.fab','backgroundColor')}})()""")
+    ok("shell metrics match the reference",shell["bar"]==65 and shell["drawer"]==347 and shell["canvas"]=="16px",str(shell))
+    ok("global letter-spacing and active drawer pill",shell["tracking"]=="0.1px" and shell["pill"]=="rgb(211, 227, 253)",str(shell))
+    ok("Help FAB present on the class screen",shell["fab"]==48 and shell["fabBg"]=="rgba(255, 255, 255, 0.85)",str(shell))
+    await pg.click("#hamb"); await pg.wait_for_timeout(350)
+    rail=await pg.evaluate("""(()=>({w:Math.round(document.querySelector('#drawer').getBoundingClientRect().width),
+      radius:getComputedStyle(document.querySelector('.ni.act .ltr')).borderRadius,
+      bg:getComputedStyle(document.querySelector('.ni.act .ltr')).backgroundColor,
+      label:getComputedStyle(document.querySelector('.ni .rlbl')).display}))()""")
+    ok("collapsed rail matches the reference",rail["w"]==72 and rail["radius"]=="0px 20px 20px 0px" and rail["bg"]=="rgb(194, 231, 255)" and rail["label"]=="block",str(rail))
+    await pg.click("#hamb"); await pg.wait_for_timeout(350)
+    await pg.click("#codeMenu"); await pg.wait_for_timeout(150)
+    ok("menus carry no shadow (tonal surface only)",await pg.evaluate("getComputedStyle(document.querySelector('.menu')).boxShadow")=="none")
+    await pg.keyboard.press("Escape"); await pg.wait_for_timeout(100)
+    ok("skip link is the first focusable element in the document",await pg.evaluate("""(()=>{const sel='a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])';
+      const f=document.querySelector(sel);return f&&f.id})()""")=="skipLink")
+    await pg.focus("#skipLink"); await pg.keyboard.press("Enter"); await pg.wait_for_timeout(100)
+    ok("skip link moves focus to the main region",await pg.evaluate("document.activeElement.id")=="main")
+    await pg.hover("#hamb"); await pg.wait_for_timeout(700)
+    ok("icon buttons have a tooltip matching the accessible name",await pg.evaluate("""(()=>{const t=document.querySelector('.tip');return !!t&&t.textContent===document.querySelector('#hamb').getAttribute('aria-label')})()"""))
     # STREAM
     await pg.click("#annOpen")
     ok("Post disabled when empty",await pg.is_disabled("#annPost"))

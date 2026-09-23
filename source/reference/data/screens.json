@@ -1,0 +1,201 @@
+{
+  "_meta": {
+    "source": "Observed live, 2026-09-23. 'verified' = captured directly in this session. 'inferred' = structure known but the state could not be produced (needs a second account / populated class).",
+    "idPattern": "courseId is an opaque base64-ish string, e.g. NzQxMjM0NTY3ODkw (12-16 chars)"
+  },
+
+  "routes": [
+    { "path": "/h",                               "name": "Home (redirects)", "verified": true },
+    { "path": "/h/tv",                            "name": "Home — Teaching view", "verified": true },
+    { "path": "/h/st",                            "name": "Home — Enrolled (student) view", "verified": true },
+    { "path": "/h/archived",                      "name": "Archived classes", "verified": true },
+    { "path": "/s",                               "name": "Global Classroom settings", "verified": true },
+    { "path": "/calendar/this-week/course/all",   "name": "Calendar", "verified": true },
+    { "path": "/a/not-turned-in/all",             "name": "To-do (student)", "verified": true },
+    { "path": "/ta/not-reviewed/all",             "name": "To review (teacher, all classes)", "verified": true },
+    { "path": "/ta/not-reviewed/{courseId}",      "name": "To review (single class)", "verified": false },
+    { "path": "/c/{courseId}",                    "name": "Class — Stream", "verified": true },
+    { "path": "/w/{courseId}/t/all",              "name": "Class — Classwork", "verified": true },
+    { "path": "/r/{courseId}/sort-name",          "name": "Class — People", "verified": true },
+    { "path": "/c/{courseId}/gb/sort-name/default","name": "Class — Grades", "verified": true },
+    { "path": "/c/{courseId}/sp/{studentId}/all/default", "name": "Student work (per student)", "verified": false },
+    { "path": "/c/{courseId}?cjc={classCode}",    "name": "Class invite link", "verified": true }
+  ],
+
+  "screens": [
+
+    { "id": "boot",
+      "name": "App boot / route change",
+      "verified": true,
+      "description": "Every navigation shows this before data arrives.",
+      "elements": [
+        "Titlebar reduced to: hamburger (greyed), Google apps, avatar — logo and page title absent",
+        "4px indeterminate linear progress bar pinned under the titlebar, Google blue segment on a light blue track",
+        "Nav drawer shows Home + Calendar, then a centred circular spinner where the class list will be, then Archived classes + Settings",
+        "Content area is an empty white panel with a rounded top-left corner",
+        "Help FAB is already present bottom-right"
+      ],
+      "cloneNote": "Worth reproducing — it is the first thing a learner sees and it sets the perceived speed of the product." },
+
+    { "id": "home-first-run",
+      "name": "Home — first-run onboarding",
+      "verified": true,
+      "trigger": "First visit to the revamped home",
+      "dialog": {
+        "illustration": "laptop + mug + confetti, pastel",
+        "title": "Welcome to the new Google Classroom Home",
+        "body": "The revamped homepage helps you stay on top of student work and up to date on the newest tools, features, and resources.",
+        "actions": ["Learn more", "Got it"]
+      },
+      "behind": "'Recently due' card renders SKELETON rows: grey circle avatar placeholder + two grey pill bars per row" },
+
+    { "id": "home-teaching",
+      "name": "Home — Teaching view",
+      "verified": true,
+      "route": "/h/tv",
+      "sections": [
+        { "type": "segmented-control", "options": ["Teaching (supervisor_account icon)", "Enrolled (school icon)"], "note": "only rendered when the account both teaches and is enrolled; selected segment carries a check icon and #D3E3FD fill" },
+        { "type": "card", "title": "Recently due", "action": "View work in progress", "collapse": true,
+          "empty": { "illustration": "bird at a laptop with a checklist", "title": "No recent assignments to review", "body": "See assignments from the past 7 days that need review" } },
+        { "type": "card", "title": "Classes", "action": "+ Add class", "content": "grid of class cards" }
+      ] },
+
+    { "id": "home-enrolled",
+      "name": "Home — Enrolled view",
+      "verified": true,
+      "route": "/h/st",
+      "sections": [
+        { "type": "card", "title": "Due soon", "action": "View To-do", "expand": true,
+          "empty": "You don't have any work due in the next 7 days",
+          "collapsedSize": [308, 64] },
+        { "type": "card", "title": "Class learning tools", "info": "Gems and Notebooks that have been recently posted by your teachers", "collapse": true,
+          "empty": "You don't have any assigned class learning tools" },
+        { "type": "card", "title": "Classes", "action": "+ Add class" }
+      ] },
+
+    { "id": "class-card",
+      "name": "Class card",
+      "verified": true,
+      "size": [292, 296],
+      "radius": 12,
+      "anatomy": [
+        "banner region ~100px tall: theme image or colour, class name (white, 2-line clamp with ellipsis), section line beneath",
+        "teacher avatar / class image overlapping the banner bottom-right, 64px circle, white ring",
+        "body: 'No work due soon' + 'Woohoo, no work due soon!' (student) or upcoming item list",
+        "footer row separated by a 1px divider: two icon buttons + overflow (⋮)"
+      ],
+      "footerIcons": {
+        "student": ["Open your work", "Open folder in Google Drive", "Class options (⋮)"],
+        "teacher": ["Open work to review", "Open folder in Google Drive", "Class options (⋮)"]
+      },
+      "overflowMenu": {
+        "student": ["Hide (tooltip: Hide and silence this class.)", "Unenroll (tooltip: Removes you from this class.)", "—", "Report abuse"],
+        "teacher": ["Move", "Edit", "Copy", "Archive", "—", "Report abuse"]
+      },
+      "teacherOverflowVerified": false },
+
+    { "id": "class-stream-empty",
+      "name": "Class — Stream (teacher, empty)",
+      "verified": true,
+      "route": "/c/{courseId}",
+      "seeAlso": "stream-and-classwork.json"
+    },
+
+    { "id": "class-stream-populated",
+      "name": "Class — Stream (populated)",
+      "verified": true,
+      "observedOn": "an enrolled class with 10+ material posts",
+      "postRow": {
+        "condensed": { "size": [571, 72], "radius": 12, "bg": "#DDE3EA", "padding": "8px 0",
+          "anatomy": "leading type icon (book / assignment / help) · '<Author> posted a new <type>: <Title>' · date line · more_vert",
+          "when": "class setting 'Classwork on the Stream' = Show condensed notifications (the default)" },
+        "full": { "when": "announcements, and classwork when the setting is 'Show attachments and details'",
+          "anatomy": "white card, radius 8-12, 1px #DADCE0 border: avatar + author + posted date + '(Edited <date>)' + body + attachment chips + 'Add class comment' row",
+          "verified": false }
+      },
+      "dateFormats": ["MMM D, YYYY", "MMM D, YYYY (Edited MMM D, YYYY)", "Created MMM D, YYYY"] },
+
+    { "id": "classwork-empty",
+      "name": "Class — Classwork (empty)",
+      "verified": true,
+      "empty": { "illustration": "bear at a desk with a computer, grey line art",
+        "title": "This is where you'll assign work",
+        "body": "You can add assignments and other work for the class, then organize it into topics" } },
+
+    { "id": "people-empty",
+      "name": "Class — People",
+      "verified": true,
+      "structure": [
+        { "heading": "Teachers", "action": "person_add icon button (right-aligned)", "rule": "1px divider under the heading",
+          "row": "40px avatar + display name; hovering reveals a ⋮ with 'Remove' for co-teachers" },
+        { "heading": "Students", "action": "person_add icon button",
+          "empty": { "illustration": "sleeping cat on a book", "title": "Add students to this class", "action": "Invite students" },
+          "populated": "select-all checkbox + 'Actions' menu (Email, Remove, Mute) + count '<n> students'; rows: checkbox, avatar, name, ⋮" }
+      ],
+      "populatedVerified": false },
+
+    { "id": "grades-empty",
+      "name": "Class — Grades (empty)",
+      "verified": true,
+      "empty": { "illustration": "fishbowl with a calculator inside", "title": "This is where you'll view and manage grades", "action": "Invite students" },
+      "populated": { "verified": false,
+        "structure": "spreadsheet grid: sticky first column of students (avatar + name), one column per assignment (title + 'out of N' + due date), sortable; cells accept a grade or show a status chip (Turned in / Missing / Done late / Draft); header row has a per-column ⋮ menu (Copy all grades to..., Sort by, Return all, View submissions)" } },
+
+    { "id": "calendar",
+      "name": "Calendar",
+      "verified": true,
+      "elements": [
+        "Titlebar gains a 'jump to date' calendar icon",
+        "'All classes' outlined select (filter)",
+        "Week stepper:  <  Sep 20 - Sep 26, 2026  >",
+        "Body: one column per day when items exist; blank when the week has none"
+      ] },
+
+    { "id": "todo",
+      "name": "To-do (student)",
+      "verified": true,
+      "tabs": ["Assigned", "Missing", "Done"],
+      "filter": "'All classes' outlined select",
+      "rows": "grouped by due window ('This week', 'Next week', 'Later', 'No due date'); each row = class colour dot, title, class name, due time" },
+
+    { "id": "to-review",
+      "name": "To review (teacher)",
+      "verified": true,
+      "tabs": ["To review", "Reviewed"],
+      "filter": "'All classes' outlined select",
+      "rows": "assignment title, class, '<n> turned in / <n> graded', due date" },
+
+    { "id": "archived",
+      "name": "Archived classes",
+      "verified": true,
+      "empty": { "illustration": "window, plant and mug, isometric line art", "title": "None of your classes have been archived", "action": "What does this mean?" } },
+
+    { "id": "settings-global",
+      "name": "Classroom settings (/s)",
+      "verified": true,
+      "cards": [
+        { "title": "Profile", "rows": [
+          "Profile picture — avatar + 'Change' link",
+          "Account settings — 'Change your password and security options, and access other Google services. Manage'",
+          "Change name — 'To change your name, go to your account settings.'" ] },
+        { "title": "Notifications", "groups": [
+          { "title": "Email", "helper": "These settings apply to the notifications you get by email. Learn more",
+            "switches": ["Allow email notifications"] },
+          { "title": "Comments", "switches": ["Comments on your posts", "Comments that mention you", "Private comments on work"] },
+          { "title": "Classes you're enrolled in", "switches": ["Work and other posts from teachers", "Returned work and grades from your teachers", "Invitations to join classes as a student", "Due-date reminders for your work"] },
+          { "title": "Classes you teach", "switches": ["Late submissions of student work", "Resubmissions of student work", "Invitations to co-teach classes", "Scheduled post published or failed"] },
+          { "title": "Class notifications", "helper": "These settings apply to both your email and device notifications for each class", "control": "expand (keyboard_arrow_down) per class" } ] }
+      ],
+      "switchStyle": "M3 switch 52x32, on = #1B57D0 track with white 24px thumb, off = grey track with small thumb" }
+  ],
+
+  "notVerified": [
+    "Grades table with real students",
+    "Student submission page ('Your work' panel: Add or create / Mark as done / Turn in, Private comments)",
+    "Teacher's per-student grading view (submission list, grade field, Return button)",
+    "Populated People tab with the Actions menu",
+    "Teacher class-card overflow menu (Move / Edit / Copy / Archive)",
+    "Archive confirmation dialog",
+    "Question / Material / Topic / Reuse post editors (structure documented from the Create menu and the Assignment editor pattern, not opened)"
+  ]
+}

@@ -68,6 +68,7 @@ function showScreen(name){
   $("#welcome").hidden=name!=="welcome";
   $("#shell").hidden=name!=="shell";
   $("#dock").hidden=name!=="shell";
+  document.body.classList.toggle("dock-on",name==="shell");
   $("#summary").hidden=name!=="summary";
   $("#finish").hidden=name!=="finish";
   if(name!=="shell")Guide.exit(true);
@@ -100,17 +101,17 @@ function closeMobileDrawer(){document.body.classList.remove("drawer-open")}
 function renderDrawer(){
   const act=k=>{if(UI.view==="home"&&k==="home")return"act";if(UI.view==="class"&&k==="edu")return"act";if(UI.view==="placeholder"&&UI.placeholder===k)return"act";return""};
   $("#drawer").innerHTML=`
-   <button class="ni ${act("home")}" data-nav="home" ${act("home")?'aria-current="page"':""}>${I("home",act("home")?"fill":"")}<span class="lbl">Home</span></button>
-   <button class="ni ${act("Calendar")}" data-nav="Calendar">${I("calendar_today")}<span class="lbl">Calendar</span></button>
+   <button class="ni ${act("home")}" data-nav="home" ${act("home")?'aria-current="page"':""}>${I("home",act("home")?"fill":"")}<span class="lbl">Home</span><span class="rlbl" aria-hidden="true">Home</span></button>
+   <button class="ni ${act("Calendar")}" data-nav="Calendar">${I("calendar_today")}<span class="lbl">Calendar</span><span class="rlbl" aria-hidden="true">Calendar</span></button>
    <div class="gap"></div>
    <button class="ni hdr" id="teachHdr" aria-expanded="${UI.enrolledOpen}">${I("group")}<span class="lbl">Teaching</span>${I(UI.enrolledOpen?"expand_less":"expand_more","chev")}</button>
    <div class="sub" ${UI.enrolledOpen?"":"hidden"}>
-     <button class="ni ${act("To review")}" data-nav="To review">${I("checklist")}<span class="lbl">To review</span></button>
-     <button class="ni ${act("edu")}" data-nav="edu" ${act("edu")?'aria-current="page"':""}><span class="ltr" aria-hidden="true">E</span><span class="lbl">EDU 101</span></button>
+     <button class="ni ${act("To review")}" data-nav="To review">${I("checklist")}<span class="lbl">To review</span><span class="rlbl" aria-hidden="true">To review</span></button>
+     <button class="ni ${act("edu")}" data-nav="edu" ${act("edu")?'aria-current="page"':""}><span class="ltr" aria-hidden="true">E</span><span class="lbl">EDU 101</span><span class="rlbl" aria-hidden="true">EDU 101</span></button>
    </div>
    <div class="gap"></div>
-   <button class="ni ${act("Archived classes")}" data-nav="Archived classes">${I("archive")}<span class="lbl">Archived classes</span></button>
-   <button class="ni ${act("Settings")}" data-nav="Settings">${I("settings")}<span class="lbl">Settings</span></button>`;
+   <button class="ni ${act("Archived classes")}" data-nav="Archived classes">${I("archive")}<span class="lbl">Archived classes</span><span class="rlbl" aria-hidden="true">Archived</span></button>
+   <button class="ni ${act("Settings")}" data-nav="Settings">${I("settings")}<span class="lbl">Settings</span><span class="rlbl" aria-hidden="true">Settings</span></button>`;
   $$("#drawer [data-nav]").forEach(b=>b.onclick=()=>{closeMobileDrawer();const n=b.dataset.nav;if(n==="home")goHome();else if(n==="edu")openClass(UI.tab||"stream");else{UI.view="placeholder";UI.placeholder=n;renderAll();$("#main").focus()}});
   $("#teachHdr").onclick=()=>{UI.enrolledOpen=!UI.enrolledOpen;renderDrawer();$("#teachHdr").focus()};
 }
@@ -429,6 +430,31 @@ function makeModal(scrimClass,boxClass,labelId,html,onMount,trigger,onCancel){
 }
 const cDialog=(html,onMount,trigger,onCancel)=>makeModal("scrim","dlg","cdT",html,onMount,trigger,onCancel);
 const simDialog=(html,onMount,trigger)=>makeModal("simscrim","simdlg","sdT",html,onMount,trigger);
+
+/* ---------------- skip link, Help FAB, tooltips ---------------- */
+$("#skipLink").onclick=e=>{e.preventDefault();const m=$("#main");m.focus();m.scrollTop=0};
+$("#helpFab").onclick=e=>openMenu(e.currentTarget,[
+  {icon:"help_center",label:"Help Centre",fn:()=>snack("The Help Centre isn't part of this practice.")},
+  {icon:"smart_display",label:"Watch the walkthrough",fn:()=>openPlayer($("#helpFab"))},
+  {icon:"route",label:"Practice Help",fn:()=>openHelp($("#helpFab"))}],{alignRight:true});
+/* Every icon button carries an aria-label; the product pairs each one with a matching tooltip. */
+let tipEl,tipT;
+function hideTip(){clearTimeout(tipT);if(tipEl){tipEl.remove();tipEl=null}}
+function showTip(el){
+  const label=el.getAttribute("aria-label");if(!label)return;hideTip();
+  tipEl=document.createElement("div");tipEl.className="tip";tipEl.textContent=label;document.body.appendChild(tipEl);
+  const r=el.getBoundingClientRect(),w=tipEl.offsetWidth,h=tipEl.offsetHeight;
+  let top=r.bottom+6;if(top+h>innerHeight-8)top=r.top-h-6;
+  tipEl.style.left=Math.max(8,Math.min(r.left+r.width/2-w/2,document.documentElement.clientWidth-w-8))+"px";
+  tipEl.style.top=Math.max(8,top)+"px";
+}
+const tipTarget=e=>e.target.closest&&e.target.closest("#shell [aria-label],.fab[aria-label]");
+document.addEventListener("pointerover",e=>{const t=tipTarget(e);if(!t||t===tipEl)return;clearTimeout(tipT);tipT=setTimeout(()=>showTip(t),500)});
+document.addEventListener("pointerout",e=>{if(tipTarget(e))hideTip()});
+document.addEventListener("focusin",e=>{const t=tipTarget(e);if(t)showTip(t)});
+document.addEventListener("focusout",hideTip);
+document.addEventListener("keydown",e=>{if(e.key==="Escape")hideTip()},true);
+["click","scroll","wheel"].forEach(ev=>document.addEventListener(ev,hideTip,true));
 
 /* ======================================================================
    TAB INTROS: Classroom-style feature-intro card with a silent wireframe

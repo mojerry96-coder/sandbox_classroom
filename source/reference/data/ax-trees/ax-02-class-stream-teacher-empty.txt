@@ -1,0 +1,75 @@
+# ACCESSIBILITY TREE — Teacher class STREAM, brand-new empty class
+# URL /c/<courseId>   Viewport 971x715   captured 2026-09-23
+
+TITLEBAR (nav "Titlebar navigation")
+ button "Main Menu"
+ heading  -> link "/h" [Classroom logo + wordmark]  +  chevron  +  link "/c/<id>" { <ClassName> ; <Section> }
+ button "Create or join a class" (add)  -> menu "Add course" { Join class | Create class }
+ button "Class settings"                      [gear]
+ button "More options"  -> menu "More options" { Google Calendar (ext) | Class Drive folder (ext) }
+ button "Google apps"
+ button "Google Account: <Name> (<email>)"
+
+LEFT DRAWER  (now shows BOTH roles)
+ Home                 /h
+ Calendar             /calendar/this-week/course/all
+ --- separator ---
+ "Teaching"  (group header, collapsible)
+    To review         /ta/not-reviewed/all
+    <ClassName>/<Section>   /c/<id>
+ --- separator ---
+ "Enrolled"  (group header, collapsible)
+    To-do             /a/not-turned-in/all
+    <EnrolledClass>   /c/<id>
+ --- separator ---
+ Archived classes     /h/archived
+ Settings             /s
+
+CLASS TAB BAR  (nav > list)
+ link "Stream (selected)"   /c/<id>
+ link "Classwork"           /w/<id>/t/all
+ link "People"              /r/<id>/sort-name
+ link "Grades"              /c/<id>/gb/sort-name/default
+ (right side) link "Google Calendar" | link "Class Drive folder" | button "Class settings" | button "More options"
+
+BANNER  region "Informational banner"
+ heading  <ClassName>            (white, large)
+ generic  <Section>              (white, smaller)
+ button   "Customize"            (white pill, pencil icon, top-right)
+ button   "View class information"  (i, bottom-right) -> tooltip "View class information"
+
+LEFT SIDEBAR (complementary)
+ CARD "Meet"
+   button "Meet link options" (more_vert) -> menu "Meet link options"
+ CARD "Class code"
+   button "More options for class code" -> menu "More options"
+        menuitem link                "Copy class invite link"
+        menuitem content_copy        "Copy class code"
+        menuitem restart_alt         "Reset class code"
+        menuitem disabled_by_default "Turn off"
+   generic "<classCode>"         (8-char lowercase alnum)
+   button "Display class code"   (fullscreen icon) -> tooltip "Display"
+ CARD "Upcoming"
+   "No work due soon"  +  "Woohoo, no work due soon!"
+   link "View all work"   /ta/not-reviewed/<id>    (label "View all")
+
+MAIN (stream)
+ button  edit  "New announcement"     (filled tonal pill)
+ button  repeat "Repost"              (text button, aria-label "Reuse post")
+ region  [empty state]
+   region "Education cards"           (illustration)
+   "This is where you can talk to your class"
+   "Use the stream to share announcements, post assignments, and respond to student questions"
+   button "Stream settings"           (outlined)
+
+CONDITIONAL TOP BANNERS (complementary regions, hidden until triggered)
+ "Refresh your browser to update this page"          [Dismiss] [Refresh]
+ "Stream was updated"                                [Show]
+ "Class is archived. Restore it to add or edit anything."  [Restore]
+ "You're invited to teach this class"                [Accept]
+ "Page is loading…"                                  (live region)
+
+HOME PAGE GAINS (once user both teaches and is enrolled)
+ tablist "Views"
+   tab "Teacher view"  icon supervisor_account  label "Teaching"
+   tab "Enrolled view" icon school              label "Enrolled"

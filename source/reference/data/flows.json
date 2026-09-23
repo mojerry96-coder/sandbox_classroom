@@ -1,0 +1,120 @@
+{
+  "_meta": { "format": "each flow is a list of steps; 'state' names a screen id from screens.json, 'on' describes what the user does, 'result' describes exactly what the UI does in response" },
+
+  "flows": [
+
+    { "id": "first-time-consumer-account",
+      "name": "First time on Classroom with a personal Google account",
+      "verified": true,
+      "importantForSimulation": true,
+      "steps": [
+        { "state": "home-enrolled", "on": "click + in the titlebar", "result": "menu 'Add course' opens right-aligned under the button: 'Join class' / 'Create class'. Surface #F0F4F9, radius 4, items 48px tall, 16px text, no shadow. The + button gains a circular grey hover fill." },
+        { "on": "click 'Create class'", "result": "GATE DIALOG — 'Using Classroom at a school with students?' (514x390, #E9EEF6, radius 28). Two body paragraphs with inline links ('Google Workspace for Education', 'Learn More', 'privacy and security'). One checkbox: \"I've read and understand the above notice, and I'm not using Classroom at a school with students\". Footer: 'Go back' (enabled) and 'Continue' (DISABLED, grey)." },
+        { "on": "tick the checkbox", "result": "checkbox fills #1B57D0 with a white check and a light-blue state layer halo; 'Continue' turns #0B57D0 and becomes enabled." },
+        { "on": "click Continue", "result": "gate dialog cross-fades to the Create class dialog. This gate never appears again for this account." }
+      ],
+      "cloneNote": "This is the moment the user described as 'it asked me if I was a teacher or a student'. On a consumer account the real fork is this legal gate plus the Join/Create choice — there is no literal teacher/student question. On a Workspace for Education account the first sign-in DOES show a 'I'm a Teacher / I'm a Student' role picker, which is irreversible without an admin. A simulation should reproduce the role picker, since that is the mental model learners carry." },
+
+    { "id": "create-class",
+      "name": "Create a class",
+      "verified": true,
+      "steps": [
+        { "state": "create-class-dialog", "result": "Dialog 560x548 at #E9EEF6 radius 28, 24px padding. Five M3 FILLED text fields, each 512x56, bg #DDE3EA, radius 4px 4px 0 0, input 16px. Vertical pitch 72px (92px after the first because of its helper row). Fields: Class name* (autofocused, blue floating label, 2px #0B57D0 active indicator, helper '*Required'), Section, Level(s) [autocomplete], Subject [autocomplete], Room. Footer: Cancel (text) / Create (DISABLED)." },
+        { "on": "type into Class name", "result": "'Create' becomes enabled and turns #0B57D0." },
+        { "on": "blur a filled field", "result": "label shrinks to the top of the field in grey, value shown at 16px, indicator returns to a 1px grey line." },
+        { "on": "click Create", "result": "SUBMITTING STATE: every field greys out and becomes non-interactive, 'Cancel' greys out, and the primary button's label changes 'Create' -> 'Creating…'. No spinner." },
+        { "on": "server responds", "result": "navigate to /c/{newCourseId}. The left drawer gains a 'Teaching' group. The home page gains the Teaching / Enrolled segmented control if the user is also enrolled somewhere." }
+      ] },
+
+    { "id": "new-class-landing",
+      "name": "What a brand-new class looks like",
+      "verified": true,
+      "result": [
+        "Stream tab active. Tab bar: Stream | Classwork | People | Grades, active tab #0B57D0 with a 3px underline.",
+        "Default theme: 'Light blue' colour, blue banner with the pencil/pen/folders illustration.",
+        "Banner 923x240 at the 24px page gutter, radius 16. Title 36px white, section 22px white, 'Customize' white pill top-right, 'View class information' (i) bottom-right.",
+        "Left sidebar: 'Meet' card (disabled on consumer accounts), 'Class code' card showing an 8-character lowercase code at 22px, 'Upcoming' card.",
+        "Main: 'New announcement' tonal pill + 'Repost' text button, then the empty-state card.",
+        "A class Drive folder and a class Google Calendar are created automatically and linked from the tab bar."
+      ] },
+
+    { "id": "customize-appearance",
+      "name": "Change the class banner and theme",
+      "verified": true,
+      "steps": [
+        { "on": "click 'Customize' on the banner", "result": "'Customize appearance' dialog, 712x538, #E9EEF6, radius 28. Live banner preview at the top, then 'Select stream header image' with [Select photo] and [Upload photo] tonal buttons, then 'Select theme color' with 8 circular 64px swatches (selected one shows a check and no fill-through). Footer: Cancel / Save (disabled until something changes)." },
+        { "on": "click 'Select photo'", "result": "'Select class theme' dialog stacks on top, 622x546. Title, then a 6-tab bar (General | English & History | Math & Science | Arts | Sports | Other), then a scrolling 2-column grid of 325x111 tiles at radius 12, role=option. Footer: Cancel / 'Select class theme' (disabled until a tile is chosen). 73 themes total — full catalogue in themes-and-colors.json." },
+        { "on": "pick a tile then 'Select class theme'", "result": "returns to Customize appearance with the preview updated; Save becomes enabled." },
+        { "on": "Save", "result": "dialog closes, banner cross-fades to the new image, class card on Home updates." }
+      ] },
+
+    { "id": "post-announcement",
+      "name": "Post an announcement",
+      "verified": true,
+      "steps": [
+        { "on": "click 'New announcement'", "result": "modal composer opens. Title 'Announcement'. 'For' row: class select + 'All students' outlined pill. Rich text area with placeholder 'Announce something to your class' and a toolbar (Bold, Italic, Underline, Bulleted list, Remove formatting) that sits UNDER the text area with a 2px blue active indicator beneath it. Attach row: four 40px circular outlined icon buttons — Drive, YouTube, Upload, Link. Footer: Cancel / Post (split button, disabled while empty)." },
+        { "on": "click 'All students'", "result": "'Announce to' sub-dialog, 528x472. Empty class shows the sleeping-cat illustration, 'There are no students in this class' and an 'Invite students' action. Footer Cancel / Done. With students it is a checkbox list with an 'All students' master row." },
+        { "on": "type text", "result": "'Post' becomes enabled (#1B57D0 filled) and the caret segment of the split button becomes interactive." },
+        { "on": "click the split-button caret", "result": "menu: Post / Schedule / Save draft." },
+        { "on": "Post", "result": "dialog closes, the announcement appears at the top of the stream as a white card." }
+      ] },
+
+    { "id": "create-assignment",
+      "name": "Create an assignment",
+      "verified": true,
+      "steps": [
+        { "state": "classwork-empty", "on": "click '+ Create'", "result": "menu, 202px wide, 56px items with leading icons: Assignment, Quiz assignment, Question, Material, Reuse post, — , Topic." },
+        { "on": "click 'Assignment'", "result": "Full-screen editor. FIRST RUN ONLY: a promo dialog 'Schedule across multiple classes' appears on top with an illustration, the body 'You can now define due dates, publish dates, and topics for classwork and announcements across multiple classes.', a 'Learn more' link and a 'Close' action." },
+        { "state": "assignment-editor", "result": "Top bar 74px: X, type icon in a tonal circle, 'Assignment' at 24px, and 'Assign' as a filled split button on the right (DISABLED until Title has content). Left column: card 1 = Title* (renders in the ERROR state — red label, red '*Required' helper, red underline — because it starts empty and touched) + 'Instructions (optional)' rich text; card 2 = 'Attach' with five 56px circular outlined buttons: Drive, YouTube, Create, Upload, Link. Right rail (~395px, white, 1px left divider): For, Assign to, Points, Due, Topic, Rubric." },
+        { "on": "click 'Create' in Attach", "result": "menu: Docs, Slides, Sheets, Drawings, Forms, Vids (with a blue 'New' badge pill)." },
+        { "on": "click Points", "result": "editable combobox — the value is free text (any number) and a single suggestion 'Ungraded' appears below. Default 100." },
+        { "on": "click Due", "result": "popover: header 'Due date & time', a 'Due date' field showing 'No due date' with a calendar icon, helper 'MM/DD/YYYY'. Choosing a date reveals a Time field." },
+        { "on": "click Topic", "result": "select: 'No topic', any existing topics, then 'Create topic'." },
+        { "on": "click the Assign caret", "result": "menu: Assign / Schedule / Save draft." }
+      ] },
+
+    { "id": "invite-students",
+      "name": "Invite students",
+      "verified": true,
+      "steps": [
+        { "on": "People tab -> person_add beside 'Students'", "result": "'Invite students' dialog: 'Invite link' label + the full URL https://classroom.google.com/c/{courseId}?cjc={classCode} + a copy icon button; then an underlined search field 'Type a name or email'; then a scrolling contact list (44px avatar, display name, email); footer Cancel / Invite (disabled until at least one recipient)." },
+        { "on": "select recipients and click Invite", "result": "invitation emails are sent; invited people appear in the Students list in an 'Invited' state until they accept." }
+      ] },
+
+    { "id": "join-class",
+      "name": "Join a class (student)",
+      "verified": true,
+      "steps": [
+        { "on": "click + -> 'Join class'", "result": "'Join class' dialog. Card 1 (tonal #DDE3EA, radius 12): 'You're currently signed in as', avatar + name + email, and a 'Switch account' outlined button. Card 2 (tonal): 'Class code' heading, 'Ask your teacher for the class code, then enter it here.', and an OUTLINED text field labelled 'Class code'. Below the cards, plain text: 'To sign in with a class code' with two bullets — 'Use an authorized account' and 'Use a class code with 5-8 letters or numbers, and no spaces or symbols' — then 'If you have trouble joining the class, go to the Help Center article'. Footer: Cancel / Join (disabled until the field has content)." },
+        { "on": "enter a valid code and Join", "result": "navigate to the class stream in the student role." },
+        { "on": "enter an invalid code", "result": "field flips to the error state with the message 'Couldn't find class. Check the class code and try again.' (wording not verified in this session)" }
+      ],
+      "joinVerified": "dialog verified; submission outcomes not exercised" },
+
+    { "id": "class-settings",
+      "name": "Edit class settings",
+      "verified": true,
+      "steps": [
+        { "on": "click the gear in the class tab bar", "result": "At expanded widths: a FULL-SCREEN dialog with a sticky top bar — X 'Close dialog' on the left, 'Class settings' title, and a 'Save' pill on the right that is DISABLED until a field changes. Body: centred outlined cards, ~870px max width. Below ~700px the same content renders in an ordinary centred dialog." },
+        { "result": "Sections and every control are enumerated in class-settings.json." },
+        { "on": "change any field", "result": "'Save' enables. Closing with unsaved changes prompts to discard." }
+      ] },
+
+    { "id": "nav-drawer-toggle",
+      "name": "Toggle the navigation drawer",
+      "verified": true,
+      "steps": [
+        { "on": "click the hamburger at >= ~1000px", "result": "drawer collapses from the 347px expanded form to a 72px icon-only rail; the content column widens to match. Click again to expand. The state persists across page loads." },
+        { "on": "click the hamburger below ~1000px", "result": "a modal drawer slides in over a scrim; clicking the scrim or pressing Escape closes it." }
+      ] }
+  ],
+
+  "globalBehaviours": [
+    { "name": "Stale-tab banner", "trigger": "the SPA has been open long enough to fall behind a deploy", "ui": "a bar at the top of the content area: 'Refresh your browser to update this page' with [Dismiss] and [Refresh]" },
+    { "name": "Stream updated banner", "ui": "'Stream was updated' with a [Show] action" },
+    { "name": "Archived class banner", "ui": "'Class is archived. Restore it to add or edit anything.' with a [Restore] action; the whole class becomes read-only" },
+    { "name": "Co-teacher invitation banner", "ui": "'You're invited to teach this class' with an [Accept] action" },
+    { "name": "Loading live region", "ui": "'Page is loading…' announced to screen readers" },
+    { "name": "Help FAB", "ui": "48px circle, rgba(255,255,255,0.85), bottom-right, fixed, z-index 9999, '?' glyph — present on every screen including the boot state" }
+  ]
+}

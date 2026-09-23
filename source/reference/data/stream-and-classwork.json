@@ -1,0 +1,126 @@
+{
+  "_source": "live capture, teacher role, empty class, 2026-09-23",
+
+  "streamTab": {
+    "url": "/c/<courseId>",
+    "layout": "banner (full width, 24px page gutter) -> two columns: left sidebar ~258px, gap 32px, main column fills rest",
+    "banner": {
+      "box": [24, 137, 923, 240], "radius": 16,
+      "title": { "fontSize": 36, "weight": 400, "color": "#FFFFFF", "x": 48, "y": 157 },
+      "section": { "fontSize": 22, "weight": 400, "color": "#FFFFFF" },
+      "gradientOverlay": "top ~50% dark-to-transparent for text legibility",
+      "customizeButton": { "label": "Customize", "icon": "edit", "box": [796,153,135,40], "bg": "#F8FAFD", "radius": 20 },
+      "infoButton": { "ariaLabel": "View class information", "position": "bottom-right", "icon": "info" }
+    },
+    "leftSidebar": [
+      { "card": "Meet", "overflow": "Meet link options", "note": "hidden/disabled on consumer accounts" },
+      { "card": "Class code", "code": "<8 lowercase alnum>", "codeFontSize": 22,
+        "actions": ["Display class code (fullscreen icon)"],
+        "overflowMenu": ["Copy class invite link", "Copy class code", "Reset class code", "Turn off"],
+        "menuItemHeight": 38, "menuItemPadding": "8px 12px", "menuFontSize": 16 },
+      { "card": "Upcoming", "empty": ["No work due soon", "Woohoo, no work due soon!"], "link": "View all -> /ta/not-reviewed/<courseId>" }
+    ],
+    "composerRow": [
+      { "label": "New announcement", "icon": "edit", "style": "filled tonal pill", "box": [244,401,197,40], "bg": "#C2E7FF", "radius": 20, "fontSize": 14 },
+      { "label": "Repost", "ariaLabel": "Reuse post", "icon": "repeat", "style": "text button" }
+    ],
+    "emptyState": {
+      "illustration": "Education cards (grey line art)",
+      "title": "This is where you can talk to your class",
+      "body": "Use the stream to share announcements, post assignments, and respond to student questions",
+      "action": { "label": "Stream settings", "icon": "settings", "style": "outlined" }
+    }
+  },
+
+  "announcementComposer": {
+    "type": "modal dialog, ~930px wide",
+    "title": "Announcement",
+    "fields": [
+      { "label": "For", "controls": [
+        { "type": "select", "ariaLabel": "Post in <Class> <Section>", "note": "multi-class posting" },
+        { "type": "outlined pill button", "label": "All students", "icon": "group_add", "opens": "Announce to sub-dialog" } ] },
+      { "type": "richtext", "placeholder": "Announce something to your class",
+        "toolbar": ["Bold", "Italic", "Underline", "Bulleted list", "Remove formatting"] }
+    ],
+    "attachRow": ["Add Google Drive file", "Add YouTube video", "Upload file", "Add link"],
+    "attachRowStyle": "40px circular outlined icon buttons",
+    "footer": { "cancel": "Cancel (text)", "primary": "Post (filled split button, disabled while empty)",
+                "splitMenu": ["Post", "Schedule", "Save draft"] },
+    "announceToSubDialog": {
+      "box": [306,150,528,472],
+      "title": "Announce to",
+      "emptyState": { "illustration": "sleeping cat on book", "text": "There are no students in this class", "action": "Invite students" },
+      "footer": ["Cancel", "Done"],
+      "populated": "checkbox list: 'All students' master checkbox + one row per student with avatar + name"
+    }
+  },
+
+  "classworkTab": {
+    "url": "/w/<courseId>/t/all",
+    "createButton": { "label": "Create", "icon": "add", "style": "filled pill, bg #1B57D0-ish blue", "position": "top-left of content" },
+    "createMenu": {
+      "items": [
+        { "label": "Assignment",      "icon": "assignment" },
+        { "label": "Quiz assignment", "icon": "assignment" },
+        { "label": "Question",        "icon": "help_outline / live_help" },
+        { "label": "Material",        "icon": "book / bookmark" },
+        { "label": "Reuse post",      "icon": "repeat" },
+        { "separator": true },
+        { "label": "Topic",           "icon": "subject / list" }
+      ],
+      "itemHeight": 56, "width": 202
+    },
+    "emptyState": {
+      "illustration": "grey line-art bear at a desk with computer",
+      "title": "This is where you'll assign work",
+      "body": "You can add assignments and other work for the class, then organize it into topics"
+    },
+    "populatedStructure": "topic sections (collapsible headers with overflow menu) each containing work rows: icon, title, 'Posted <date>' / 'Due <date>', row overflow menu"
+  },
+
+  "assignmentEditor": {
+    "type": "full-screen page/dialog",
+    "topBar": {
+      "height": 74,
+      "left": ["X Close dialog (40x40)", "type icon in tonal circle (40px)", "title 'Assignment' (24px)"],
+      "right": { "primary": "Assign (filled split button, DISABLED until Title filled)", "splitMenu": ["Assign", "Schedule", "Save draft"] }
+    },
+    "columns": { "left": "x 28..870, cards", "right": "rail from x 900 to edge (~395px), white, 1px left divider" },
+    "leftCards": [
+      { "card": 1, "fields": [
+        { "label": "Title", "required": true, "errorState": "label + '*Required' turn red (#B3261E) with 2px red underline when empty/touched" },
+        { "label": "Instructions (optional)", "type": "richtext", "toolbar": ["Bold","Italic","Underline","Bulleted list","Remove formatting"] } ] },
+      { "card": 2, "title": "Attach", "buttons": [
+        { "label": "Drive",  "ariaLabel": "Add Google Drive file" },
+        { "label": "YouTube","ariaLabel": "Add YouTube video" },
+        { "label": "Create", "ariaLabel": "Create new attachment", "menu": ["Docs","Slides","Sheets","Drawings","Forms","Vids (New badge)"] },
+        { "label": "Upload", "ariaLabel": "Upload file" },
+        { "label": "Link",   "ariaLabel": "Add link" } ],
+        "buttonStyle": "56px circular outlined, brand-coloured glyph, label beneath, 14px" }
+    ],
+    "rightRail": [
+      { "label": "For",       "type": "select",  "value": "<Class name>" },
+      { "label": "Assign to", "type": "outlined pill", "value": "All students", "icon": "group_add" },
+      { "label": "Points",    "type": "editable combobox", "default": 100, "suggestion": "Ungraded", "width": 172 },
+      { "label": "Due",       "type": "select -> popover", "default": "No due date",
+        "popover": { "header": "Due date & time", "field": "Due date (calendar icon)", "helper": "MM/DD/YYYY", "then": "Time field appears once a date is chosen" } },
+      { "label": "Topic",     "type": "select", "default": "No topic", "options": ["No topic", "<existing topics>", "Create topic"] },
+      { "label": "Rubric",    "type": "tonal button '+ Rubric'", "info": "Learn more about how to use rubrics (support.google.com link)" }
+    ],
+    "variants": {
+      "Quiz assignment": "same as Assignment + auto-attached 'Blank Quiz' Google Form + 'Grade importing' toggle",
+      "Question": "Title -> 'Question', adds answer-type select (Short answer | Multiple choice) and two checkboxes: 'Students can reply to each other', 'Students can edit answer'",
+      "Material": "no Points / Due / Rubric; only Title, Description, Attach, For, Topic",
+      "Topic": "small dialog: single 'Topic' text field + Cancel / Add",
+      "Reuse post": "dialog: pick a class -> pick a post -> checkbox 'Create new copies of all attachments'"
+    }
+  },
+
+  "firstRunPromos": [
+    { "trigger": "first open of the classwork editor",
+      "type": "centred dialog with illustration",
+      "title": "Schedule across multiple classes",
+      "body": "You can now define due dates, publish dates, and topics for classwork and announcements across multiple classes.",
+      "links": ["Learn more"], "actions": ["Close"] }
+  ]
+}

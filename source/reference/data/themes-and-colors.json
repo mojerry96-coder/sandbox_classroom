@@ -1,0 +1,43 @@
+{
+  "_source": "Customize appearance -> Select photo -> Select class theme, classroom.google.com, 2026-09-23",
+  "customizeAppearanceDialog": {
+    "title": "Customize appearance",
+    "size": [712, 538], "bg": "#E9EEF6", "radius": 28,
+    "sections": [
+      { "label": "Select stream header image", "actions": [
+        { "label": "Select photo",  "icon": "image",  "style": "filled-tonal" },
+        { "label": "Upload photo",  "icon": "upload", "style": "filled-tonal" } ] },
+      { "label": "Select theme color", "control": "radio group of 8 circular swatches, 64px, 2px ring, check icon when selected" }
+    ],
+    "footer": ["Cancel", "Save"],
+    "saveDisabledUntilChange": true
+  },
+  "themeColors": [
+    { "name": "Blue",       "fill": "#D0E4FF", "ring": "#3271EA" },
+    { "name": "Green",      "fill": "#BEEFBB", "ring": "#128937" },
+    { "name": "Pink",       "fill": "#FFD8EF", "ring": "#DC258D" },
+    { "name": "Orange",     "fill": "#FFDCC3", "ring": "#E86E00" },
+    { "name": "Cyan",       "fill": "#ACEDFF", "ring": "#009EBB" },
+    { "name": "Purple",     "fill": "#EEDCFE", "ring": "#7438D2" },
+    { "name": "Light blue", "fill": "#E7F2FF", "ring": "#4E8FF8", "default": true },
+    { "name": "Grey",       "fill": "#E3E3E3", "ring": "#5E5E5E" }
+  ],
+  "selectClassThemeDialog": {
+    "title": "Select class theme",
+    "size": [622, 546],
+    "tabs": ["General", "English & History", "Math & Science", "Arts", "Sports", "Other"],
+    "grid": { "columns": 2, "tileSize": [325, 111], "tileRadius": 12, "colGap": 4, "rowGap": 4, "role": "option" },
+    "footer": ["Cancel", "Select class theme"],
+    "confirmDisabledUntilSelection": true,
+    "catalogue": {
+      "General": ["Breakfast","Honors","Graduation","Book club","Code","Reach out","Learn language","Back to school","Read"],
+      "English & History": ["World studies","English","World history","Social studies","Geography","US history","Writing","Language arts"],
+      "Math & Science": ["Geometry","Psychology","Math","Chemistry","Physics","Biology"],
+      "Arts": ["Coffee","Cinema","Violin2","Arts","Theatre opera","Family meal","Birthday","Learn instrument","Design","Concert","Dancing","Cooking","Bbq"],
+      "Sports": ["Wrestling","Volleyball","Athletics jumping","American football","Triathlon","Rowing","Equestrian","Water polo","Golf","Kayaking","Bowling","Cycling","Soccer","Karate","Billiards","Cricket","Tennis","Swimming","Climbing","Cycling","Gym","Ping pong","Fencing","Boxing"],
+      "Other": ["Economics","Walking dog","Hobby","Sailing","Video gaming","Car maintenance","Repair","Hiking","Haircut","Game night","Camping","Oil change","Handcraft"]
+    },
+    "totalThemes": 73
+  },
+  "defaultNewClassTheme": { "colorName": "Light blue", "bannerIllustration": "blue desk with pencil, pen and folders", "bannerBg": "#3B7DD8 (approx)" }
+}

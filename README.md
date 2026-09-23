@@ -78,7 +78,7 @@ Miva Open University · Interactive and Immersive Learning Team.
 
 ## Verification
 
-The suite has **69** checks (51 original, 9 for the tab intro cards, 2 for assignment-edit logging, 7 for the opener and the walkthrough handover). The opener checks follow the sign-off list in `source/brand/OPENER.md`: no two logos overlap at any sampled frame, each stage settles centred, all three fit at 375px with no sideways scroll, the motif stays at 0.7, each logo keeps its institution's alt text, Begin takes focus, and reduced motion shows the finished frame (`source/test/verify.py`), plus a player check. They cover:
+The suite has **77** checks (51 original, 9 for the tab intro cards, 2 for assignment-edit logging, 7 for the opener and the walkthrough handover). The opener checks follow the sign-off list in `source/brand/OPENER.md`: no two logos overlap at any sampled frame, each stage settles centred, all three fit at 375px with no sideways scroll, the motif stays at 0.7, each logo keeps its institution's alt text, Begin takes focus, and reduced motion shows the finished frame (`source/test/verify.py`), plus a player check. They cover:
 
 - seeded state
 - empty and whitespace-only input blocked everywhere

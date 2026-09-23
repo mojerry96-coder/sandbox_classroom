@@ -1,0 +1,308 @@
+{
+  "_meta": {
+    "locale": "en",
+    "note": "Verbatim strings captured from the live product. Use these so the clone reads identically. Note the typographic apostrophe (U+2019) in several strings — Google is inconsistent about it, and both variants below are reproduced exactly as found.",
+    "branding": "Do NOT reuse the Google Classroom wordmark or the green board/person logo. Everything below is functional UI copy."
+  },
+
+  "nav": {
+    "mainMenu": "Main Menu",
+    "home": "Home",
+    "calendar": "Calendar",
+    "teaching": "Teaching",
+    "enrolled": "Enrolled",
+    "toReview": "To review",
+    "toDo": "To-do",
+    "archivedClasses": "Archived classes",
+    "settings": "Settings",
+    "skipLink": "Skip to main content",
+    "createOrJoin": "Create or join a class",
+    "joinClass": "Join class",
+    "createClass": "Create class",
+    "googleApps": "Google apps",
+    "account": "Google Account: {name} ({email})",
+    "helpFab": "Help and Feedback"
+  },
+
+  "home": {
+    "views": { "teacher": "Teacher view", "enrolled": "Enrolled view" },
+    "dueSoon": "Due soon",
+    "dueSoonEmpty": "You don't have any work due in the next 7 days",
+    "viewToDo": "View To-do",
+    "expandSection": "Expand {section} section",
+    "collapseSection": "Collapse {section} section",
+    "classLearningTools": "Class learning tools",
+    "classLearningToolsInfo": "Gems and Notebooks that have been recently posted by your teachers",
+    "classLearningToolsEmpty": "You don’t have any assigned class learning tools",
+    "recentlyDue": "Recently due",
+    "viewWorkInProgress": "View work in progress",
+    "recentlyDueEmptyTitle": "No recent assignments to review",
+    "recentlyDueEmptyBody": "See assignments from the past 7 days that need review",
+    "classes": "Classes",
+    "addClass": "Add class",
+    "onboardingTitle": "Welcome to the new Google Classroom Home",
+    "onboardingBody": "The revamped homepage helps you stay on top of student work and up to date on the newest tools, features, and resources.",
+    "onboardingActions": ["Learn more", "Got it"]
+  },
+
+  "classCard": {
+    "noWorkDueSoon": "No work due soon",
+    "woohoo": "Woohoo, no work due soon!",
+    "openYourWork": "Open your work for \"{className}\"",
+    "openDriveFolder": "Open folder for \"{className}\" in Google Drive",
+    "classOptions": "Class options for {className}",
+    "moreOptions": "More options",
+    "menu": {
+      "hide": "Hide",
+      "hideTooltip": "Hide and silence this class.",
+      "unenroll": "Unenroll",
+      "unenrollTooltip": "Removes you from this class.",
+      "reportAbuse": "Report abuse"
+    }
+  },
+
+  "consumerGate": {
+    "title": "Using Classroom at a school with students?",
+    "p1": "If so, your school must sign up for a Google Workspace for Education account before you can use Classroom. Learn More",
+    "p2": "Google Workspace for Education lets schools decide which Google services their students can use, and provides additional privacy and security protections that are important in a school setting. Students cannot use Google Classroom at a school with personal accounts.",
+    "links": ["Google Workspace for Education", "Learn More", "privacy and security"],
+    "checkbox": "I've read and understand the above notice, and I'm not using Classroom at a school with students",
+    "actions": ["Go back", "Continue"]
+  },
+
+  "createClass": {
+    "title": "Create class",
+    "fields": ["Class name", "Section", "Level(s)", "Subject", "Room"],
+    "requiredMarker": "*",
+    "requiredHelper": "*Required",
+    "actions": ["Cancel", "Create"],
+    "submitting": "Creating…"
+  },
+
+  "joinClass": {
+    "title": "Join class",
+    "signedInAs": "You're currently signed in as",
+    "switchAccount": "Switch account",
+    "classCode": "Class code",
+    "classCodeHelp": "Ask your teacher for the class code, then enter it here.",
+    "howToTitle": "To sign in with a class code",
+    "howToBullets": [
+      "Use an authorized account",
+      "Use a class code with 5-8 letters or numbers, and no spaces or symbols"
+    ],
+    "trouble": "If you have trouble joining the class, go to the Help Center article",
+    "actions": ["Cancel", "Join"]
+  },
+
+  "classTabs": ["Stream", "Classwork", "People", "Grades"],
+
+  "stream": {
+    "customize": "Customize",
+    "viewClassInformation": "View class information",
+    "newAnnouncement": "New announcement",
+    "repost": "Repost",
+    "repostAria": "Reuse post",
+    "emptyTitle": "This is where you can talk to your class",
+    "emptyBody": "Use the stream to share announcements, post assignments, and respond to student questions",
+    "streamSettings": "Stream settings",
+    "meet": "Meet",
+    "meetLinkOptions": "Meet link options",
+    "classCodeCard": "Class code",
+    "classCodeMenu": ["Copy class invite link", "Copy class code", "Reset class code", "Turn off"],
+    "moreOptionsForClassCode": "More options for class code",
+    "displayClassCode": "Display class code",
+    "displayTooltip": "Display",
+    "upcoming": "Upcoming",
+    "viewAll": "View all",
+    "viewAllWork": "View all work"
+  },
+
+  "announcementComposer": {
+    "title": "Announcement",
+    "for": "For",
+    "postIn": "Post in {className} {section}",
+    "allStudents": "All students",
+    "placeholder": "Announce something to your class",
+    "toolbar": ["Bold", "Italic", "Underline", "Bulleted list", "Remove formatting"],
+    "attach": ["Add Google Drive file", "Add YouTube video", "Upload file", "Add link"],
+    "saveOptions": "Save options",
+    "splitMenu": ["Post", "Schedule", "Save draft"],
+    "actions": ["Cancel", "Post"],
+    "announceTo": "Announce to",
+    "noStudents": "There are no students in this class",
+    "inviteStudents": "Invite students",
+    "subDialogActions": ["Cancel", "Done"]
+  },
+
+  "classwork": {
+    "create": "Create",
+    "createMenu": ["Assignment", "Quiz assignment", "Question", "Material", "Reuse post", "Topic"],
+    "emptyTitle": "This is where you’ll assign work",
+    "emptyBody": "You can add assignments and other work for the class, then organize it into topics"
+  },
+
+  "assignmentEditor": {
+    "title": "Assignment",
+    "closeDialog": "Close dialog",
+    "titleField": "Title",
+    "instructions": "Instructions (optional)",
+    "attach": "Attach",
+    "attachButtons": ["Drive", "YouTube", "Create", "Upload", "Link"],
+    "attachAria": ["Add Google Drive file", "Add YouTube video", "Create new attachment", "Upload file", "Add link"],
+    "createMenu": ["Docs", "Slides", "Sheets", "Drawings", "Forms", "Vids"],
+    "vidsBadge": "New",
+    "for": "For",
+    "assignTo": "Assign to",
+    "points": "Points",
+    "maxPointValue": "Maximum point value",
+    "ungraded": "Ungraded",
+    "due": "Due",
+    "noDueDate": "No due date",
+    "dueDateAndTime": "Due date & time",
+    "dueDate": "Due date",
+    "dateFormat": "MM/DD/YYYY",
+    "topic": "Topic",
+    "noTopic": "No topic",
+    "createTopic": "Create topic",
+    "rubric": "Rubric",
+    "attachRubric": "Attach rubric",
+    "rubricLearnMore": "Learn more about how to use rubrics",
+    "assign": "Assign",
+    "splitMenu": ["Assign", "Schedule", "Save draft"],
+    "promoTitle": "Schedule across multiple classes",
+    "promoBody": "You can now define due dates, publish dates, and topics for classwork and announcements across multiple classes.",
+    "promoActions": ["Learn more", "Close"]
+  },
+
+  "people": {
+    "teachers": "Teachers",
+    "students": "Students",
+    "inviteTeachers": "Invite teachers",
+    "inviteStudents": "Invite students",
+    "emptyTitle": "Add students to this class",
+    "inviteDialog": {
+      "title": "Invite students",
+      "inviteLink": "Invite link",
+      "copyInviteLink": "Copy invite link",
+      "search": "Type a name or email",
+      "actions": ["Cancel", "Invite"]
+    }
+  },
+
+  "grades": {
+    "emptyTitle": "This is where you’ll view and manage grades",
+    "action": "Invite students"
+  },
+
+  "calendar": {
+    "allClasses": "All classes",
+    "weekFormat": "MMM D - MMM D, YYYY"
+  },
+
+  "toDo": { "tabs": ["Assigned", "Missing", "Done"] },
+  "toReview": { "tabs": ["To review", "Reviewed"] },
+
+  "archived": {
+    "emptyTitle": "None of your classes have been archived",
+    "action": "What does this mean?"
+  },
+
+  "globalSettings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "profilePicture": "Profile picture",
+    "change": "Change",
+    "accountSettings": "Account settings",
+    "accountSettingsBody": "Change your password and security options, and access other Google services. Manage",
+    "changeName": "Change name",
+    "changeNameBody": "To change your name, go to your account settings.",
+    "notifications": "Notifications",
+    "email": "Email",
+    "emailHelper": "These settings apply to the notifications you get by email. Learn more",
+    "allowEmail": "Allow email notifications",
+    "comments": "Comments",
+    "commentsSwitches": ["Comments on your posts", "Comments that mention you", "Private comments on work"],
+    "enrolledGroup": "Classes you're enrolled in",
+    "enrolledSwitches": ["Work and other posts from teachers", "Returned work and grades from your teachers", "Invitations to join classes as a student", "Due-date reminders for your work"],
+    "teachingGroup": "Classes you teach",
+    "teachingSwitches": ["Late submissions of student work", "Resubmissions of student work", "Invitations to co-teach classes", "Scheduled post published or failed"],
+    "classNotifications": "Class notifications",
+    "classNotificationsHelper": "These settings apply to both your email and device notifications for each class"
+  },
+
+  "classSettings": {
+    "title": "Class settings",
+    "save": "Save",
+    "classDetails": "Class Details",
+    "classDescription": "Class description",
+    "general": "General",
+    "inviteCodes": "Invite codes",
+    "manageInviteCodes": "Manage invite codes",
+    "inviteCodesHelper": "Settings apply to both invite links and class codes",
+    "turnedOn": "Turned on",
+    "inviteLink": "Invite link",
+    "copyInviteLink": "Copy invite link",
+    "classView": "Class view",
+    "streamAndClasswork": "Stream and classwork",
+    "streamOptions": ["Students can post and comment", "Students can only comment", "Only teachers can post or comment"],
+    "classworkOnStream": "Classwork on the Stream",
+    "classworkOptions": ["Show attachments and details", "Show condensed notifications", "Hide notifications"],
+    "showDeletedItems": "Show deleted items",
+    "showDeletedItemsHelper": "Only teachers can view deleted items.",
+    "manageMeetLink": "Manage Meet link",
+    "classroomMeetLink": "Classroom Meet link",
+    "meetBullets": [
+      "Teachers or co-teachers are always meeting hosts",
+      "Students will be sent to the waiting room until a teacher is present in the meeting",
+      "Video participants outside of your class can ask to be admitted by the host"
+    ],
+    "meetLearnMore": "Learn more about added safety features with Classroom Meet links",
+    "meetNoPermission": "You don’t have permission to create or edit the Meet link. Contact your admin to get access.",
+    "grading": "Grading",
+    "draftGradeTitle": "Draft grade for missing assignments",
+    "draftGradeBody": "When a student hasn't turned in their submission by the due date, or you have marked the submission as missing, it will automatically receive a draft grade. Students won't see this grade until you return it.",
+    "autoDraftGrade": "Automatically apply a draft grade to Missing assignments",
+    "defaultGrade": "Default grade",
+    "autogradePercent": "Autograde missing grade percent",
+    "gradeCalculation": "Grade calculation",
+    "overallGradeCalculation": "Overall grade calculation",
+    "gradingSystemHelper": "Choose a grading system. Learn more",
+    "gradingOptions": ["No overall grade", "Total points", "Weighted by category"],
+    "showOverallGrade": "Show overall grade to students",
+    "gradeCategories": "Grade categories",
+    "addGradeCategory": "Add grade category",
+    "importGradeCategories": "Import grade categories from SIS"
+  },
+
+  "customize": {
+    "title": "Customize appearance",
+    "selectHeaderImage": "Select stream header image",
+    "selectPhoto": "Select photo",
+    "uploadPhoto": "Upload photo",
+    "selectThemeColor": "Select theme color",
+    "colorNames": ["Blue", "Green", "Pink", "Orange", "Cyan", "Purple", "Light blue", "Grey"],
+    "actions": ["Cancel", "Save"],
+    "themePickerTitle": "Select class theme",
+    "themeTabs": ["General", "English & History", "Math & Science", "Arts", "Sports", "Other"],
+    "themePickerActions": ["Cancel", "Select class theme"]
+  },
+
+  "banners": {
+    "refresh": "Refresh your browser to update this page",
+    "refreshActions": ["Dismiss", "Refresh"],
+    "streamUpdated": "Stream was updated",
+    "streamUpdatedAction": "Show",
+    "archived": "Class is archived. Restore it to add or edit anything.",
+    "archivedAction": "Restore",
+    "coTeachInvite": "You're invited to teach this class",
+    "coTeachAction": "Accept",
+    "pageLoading": "Page is loading…"
+  },
+
+  "streamPost": {
+    "materialSummary": "{author} posted a new material: {title}",
+    "created": "Created {date}",
+    "edited": "{date} (Edited {editedDate})",
+    "moreOptions": "More options"
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "_source": "Class settings (gear icon on class page), teacher role, 2026-09-23",
+  "presentation": {
+    "wide": "full-screen dialog: sticky top app bar [X Close dialog] [title 'Class settings'] ......... [Save pill, disabled until dirty]; body = centered stack of outlined cards, card max-width ~870px, page bg #FFFFFF/#F8FAFD",
+    "narrow (<~700px viewport)": "same content inside a standard centered dialog"
+  },
+  "topBar": { "closeButton": "40x40 icon button, X", "title": "Class settings", "save": "80x40 filled pill, DISABLED until a field changes" },
+  "sections": [
+    {
+      "title": "Class Details",
+      "fields": [
+        { "label": "Class name", "required": true, "type": "text", "helper": "*Required", "inputWidth": 670 },
+        { "label": "Class description", "type": "textarea" },
+        { "label": "Section", "type": "text" },
+        { "label": "Level(s)", "type": "combobox (autocomplete, multi)" },
+        { "label": "Subject", "type": "combobox (autocomplete, free text allowed)" },
+        { "label": "Room", "type": "text" }
+      ]
+    },
+    {
+      "title": "General",
+      "groups": [
+        {
+          "title": "Invite codes",
+          "subtitle": "Manage invite codes",
+          "note": "Settings apply to both invite links and class codes",
+          "controls": [
+            { "label": "Manage invite controls turned on", "type": "button", "size": [120, 40], "stateText": "Turned on" },
+            { "label": "Invite link", "value": "https://classroom.google.com/c/<courseId>?cjc=<classCode>", "action": "Copy invite link (40x40 icon button)" },
+            { "label": "Class code", "value": "<classCode>", "format": "8 chars, lowercase alphanumeric" },
+            { "label": "Class view", "action": "Display class code", "size": [181, 40] }
+          ]
+        },
+        {
+          "title": "Stream and classwork",
+          "controls": [
+            { "label": "Stream", "type": "select", "width": 320, "height": 56,
+              "options": ["Students can post and comment", "Students can only comment", "Only teachers can post or comment"],
+              "default": "Students can post and comment" },
+            { "label": "Classwork on the Stream", "type": "select", "width": 320, "height": 56,
+              "options": ["Show attachments and details", "Show condensed notifications", "Hide notifications"],
+              "default": "Show condensed notifications" },
+            { "label": "Show deleted items", "type": "switch", "size": [52, 32], "default": false,
+              "helper": "Only teachers can view deleted items." }
+          ]
+        },
+        {
+          "title": "Manage Meet link",
+          "subtitle": "Classroom Meet link",
+          "bullets": [
+            "Teachers or co-teachers are always meeting hosts",
+            "Students will be sent to the waiting room until a teacher is present in the meeting",
+            "Video participants outside of your class can ask to be admitted by the host"
+          ],
+          "link": "Learn more about added safety features with Classroom Meet links",
+          "consumerAccountState": "You don't have permission to create or edit the Meet link. Contact your admin to get access."
+        }
+      ]
+    },
+    {
+      "title": "Grading",
+      "groups": [
+        {
+          "title": "Draft grade for missing assignments",
+          "body": "When a student hasn't turned in their submission by the due date, or you have marked the submission as missing, it will automatically receive a draft grade. Students won't see this grade until you return it.",
+          "controls": [
+            { "label": "Automatically apply a draft grade to Missing assignments", "type": "switch", "default": true },
+            { "label": "Default grade", "type": "number", "suffix": "%", "default": 0, "width": 122 }
+          ]
+        },
+        {
+          "title": "Grade calculation",
+          "controls": [
+            { "label": "Overall grade calculation", "type": "select", "width": 200, "height": 56,
+              "helper": "Choose a grading system. Learn more",
+              "options": ["No overall grade", "Total points", "Weighted by category"],
+              "default": "No overall grade" },
+            { "label": "Show overall grade to students", "type": "switch", "default": false }
+          ]
+        },
+        {
+          "title": "Grade categories",
+          "controls": [
+            { "label": "Add grade category", "type": "button" },
+            { "label": "Import grade categories from SIS", "type": "button", "visibility": "hidden on consumer accounts" }
+          ]
+        }
+      ]
+    }
+  ]
+}
