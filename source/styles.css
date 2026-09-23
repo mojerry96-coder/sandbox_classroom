@@ -66,8 +66,10 @@ a{color:var(--pri)}
 .topbar.scrolled{border-bottom-color:var(--olv)}
 .brand{display:flex;align-items:center;gap:10px;margin-left:6px;color:var(--onv);font:400 22px/28px var(--fs);text-decoration:none;border-radius:8px;padding:6px 6px;min-height:44px}
 .brand:hover{text-decoration:underline}
-.brand .logo{height:30px;width:auto;flex:none;display:block}
-@media (max-width:600px){.brand .logo{height:24px}}
+/* generic mark for the simulated app: neutral, and neither Google's nor Miva's */
+.brand .logo{width:30px;height:30px;border-radius:8px;background:#5F6368;color:#fff;display:grid;place-items:center;flex:none}
+.brand .logo .ms{font-size:20px}
+@media (max-width:600px){.brand .logo{width:26px;height:26px;border-radius:7px}.brand .logo .ms{font-size:18px}}
 .crumb{display:flex;align-items:center;min-width:0;color:var(--onv);font:400 22px/28px var(--fs)}
 .crumb .ms{margin:0 6px;font-size:20px}
 .crumb span.t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:32vw}

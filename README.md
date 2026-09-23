@@ -29,7 +29,7 @@ Miva Open University · Interactive and Immersive Learning Team.
 
 | Area | Reference | Status |
 |---|---|---|
-| App shell: top bar, drawer and rail, active pill, colours, type, spacing | Home screenshot, plus live-DOM measurements from the Sep 2026 capture | **Reference-backed**, except that the Google Classroom logo is replaced by the Miva logo |
+| App shell: top bar, drawer and rail, active pill, colours, type, spacing | Home screenshot, plus live-DOM measurements from the Sep 2026 capture | **Reference-backed**, except the app mark: the simulated app carries a neutral mortarboard tile, neither Google's logo nor Miva's |
 | Home Classes card grid and class card | Home screenshot | **Reference-backed** (the owner card's footer icons are provisional) |
 | Class tabs, banner, left column, Stream item and post cards | Student-view capture only | **Provisional**: teacher-view Stream (composer, class code card) needs a teacher reference |
 | Classwork rows, topic headers, Create menu, assignment editor | Student-view capture plus standard Classroom behaviour | **Provisional**: the Create menu lists Assignment and Topic only |
@@ -52,7 +52,8 @@ Miva Open University · Interactive and Immersive Learning Team.
 
 - **Opener artwork:** `source/brand/` holds the three partner logos (`ekiti.svg`, `miva.svg`, `tof.svg`), the `chevrons.svg` motif and the house spec `OPENER.md`, all as supplied. `ekiti.svg` and `tof.svg` carry bitmaps inside the SVG, so the crest is the heaviest asset in the build (474 KB before encoding).
 - **Opener type:** Afacad (variable), from Fontsource under the OFL, used for the opener title only.
-- **Logo:** the Miva Open University logo, in `source/brand/`. The blue version is used on light backgrounds (the top bar and the Finish screen) and the white version on dark ones (the welcome panel and the walkthrough end card). It replaces the Google Classroom logo and the old "MIVA · Open University · Interactive and Immersive Learning" text mark.
+- **Logo:** the Miva Open University logo, in `source/brand/`, marks the practice's own screens only: the blue version on the light Finish screen, the white version on the dark welcome panel and the walkthrough end card. It replaced the old "MIVA · Open University · Interactive and Immersive Learning" text mark.
+- **The simulated app's mark:** a neutral tile with a mortarboard, drawn from the Material Symbols subset already in the build. Miva does not brand the Classroom-style interface, and Google's logo is not reproduced.
 - **Fonts:** Google Sans, Google Sans Flex and Roboto, from Fontsource under the OFL.
 - **Icons:** a subset of Material Symbols Outlined, under Apache-2.0.
 - **Not included:** Google's logo, banner art and illustrations are not reproduced. The banner and empty-state art are drawn generically.
