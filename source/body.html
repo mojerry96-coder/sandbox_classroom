@@ -1,15 +1,24 @@
 <div id="live" class="sr" aria-live="polite" aria-atomic="true"></div>
 
-<!-- ======================= MIVA OPENER (plays once on load, then reveals the welcome screen) ======================= -->
-<div id="opener">
-  <span class="op-ring" aria-hidden="true"></span>
-  <div class="op-stage" role="img" aria-label="Miva Open University presents The Sandbox Class">
-    <div class="op-logo"><img src="@@LOGO_WHITE@@" alt="" width="966" height="312"><span class="op-shine" style="-webkit-mask-image:url(@@LOGO_WHITE@@);mask-image:url(@@LOGO_WHITE@@)"></span></div>
-    <span class="op-rule"></span>
-    <div class="op-course">DT01 · DT 01 03 · Practice simulation</div>
-    <div class="op-title">The Sandbox Class</div>
+<!-- ======================= OPENER (house spec: brand/OPENER.md) =======================
+     Three partner logos arrive one at a time and line up, then the title and Begin.
+     Begin is also the click that lets the walkthrough play with sound. -->
+<div id="intro" class="intro" role="dialog" aria-modal="true" aria-label="The Sandbox Class">
+  <div class="intro-motif" aria-hidden="true"></div>
+  <div class="intro-inner">
+    <div class="intro-logos">
+      <span class="intro-logo lg-ekiti"><img src="@@LOGO_EKITI@@" alt="Government of Ekiti State, Nigeria"></span>
+      <span class="intro-rule" aria-hidden="true"></span>
+      <span class="intro-logo lg-miva"><img src="@@LOGO_MIVA_SVG@@" alt="MIVA Open University"></span>
+      <span class="intro-rule" aria-hidden="true"></span>
+      <span class="intro-logo lg-tof"><img src="@@LOGO_TOF@@" alt="Tunji Olowolafe Foundation"></span>
+    </div>
+    <p class="intro-tagline">Study. Anywhere. Anyone. Anytime.</p>
+    <h1 class="intro-title">The <span class="accent">Sandbox</span> Class</h1>
+    <p class="intro-sub">DT01 · Unit DT 01 03</p>
+    <button class="intro-begin" type="button" id="introBegin">Begin @@I:arrow_forward@@</button>
   </div>
-  <button class="op-skip" id="openerSkip">Skip intro</button>
+  <button class="intro-skip" type="button" id="introSkip">Skip <kbd>Esc</kbd></button>
 </div>
 
 <!-- ======================= MIVA WELCOME (simulation layer) ======================= -->

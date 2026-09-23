@@ -17,9 +17,9 @@ Miva Open University · Interactive and Immersive Learning Team.
 
 ## Screen flow
 
-1. **Miva opener** plays once when the page loads: about 5 seconds, silent. The emblem sharpens into view, the wordmark slides out from behind it, a light sweeps across the logo, and the course title rises before it fades out. Skip intro and Escape end it at once. When it ends, the walkthrough opens over the welcome screen and starts playing. With reduced motion the opener shows its finished composition briefly, and the walkthrough opens without starting.
+1. **Opener** (house spec, `source/brand/OPENER.md`) plays on load: about 4.5 seconds, silent. The Ekiti State crest, the MIVA lockup and the Tunji Olowolafe Foundation lockup arrive one at a time, and the row re-centres on each arrival so that whatever is on screen stays centred and no logo lands on another. Dividers and the chevron motif follow, then the tagline, "THE SANDBOX CLASS" with SANDBOX in amber, the unit label and **Begin**. Skip or Esc jumps to the finished frame rather than dismissing the opener, because the Begin click is what lets the walkthrough play with sound. With reduced motion the finished frame appears at once.
 2. **Miva welcome** offers Begin Practice and Watch walkthrough.
-3. **Walkthrough player** plays a recorded demo session and never touches the learner's sandbox. It has Play/Pause, Replay, a seek bar, volume and mute, a captions toggle (on by default) and a clickable transcript. Straight after the opener it starts on its own. Browsers only allow sound once the learner has clicked something: after Skip intro it plays with sound; if the opener simply ran out, it plays muted with captions and shows a Turn on sound button. Opened later from Watch walkthrough, it waits for Play. Closing it returns focus to Begin Practice. When the walkthrough reaches its end card, the Begin Practice button drawn in the video becomes a real button: from the welcome screen it starts practice, and from inside the practice it closes the walkthrough.
+3. **Walkthrough player** plays a recorded demo session and never touches the learner's sandbox. It has Play/Pause, Replay, a seek bar, volume and mute, a captions toggle (on by default) and a clickable transcript. The opener's **Begin** opens it and starts it playing, with sound, because Begin is a click. (If a browser still blocks sound, it plays muted with captions and shows a Turn on sound button.) Opened later from Watch walkthrough, it waits for Play. Closing it returns focus to Begin Practice. When the walkthrough reaches its end card, the Begin Practice button drawn in the video becomes a real button: from the welcome screen it starts practice, and from inside the practice it closes the walkthrough.
 4. **EDU 101 workspace** opens straight onto Stream. The first time each tab opens, a Classroom-style intro card plays a short, silent wireframe animation of that tab's key action (posting, filing work under a topic, inviting and adding people). "Got it" closes it. It shows once per tab and can be replayed from Practice Help › What can I do here? Stream, Classwork and People are free to use in any order. The Classroom Home, Calendar, To review, Archived and Settings items give navigation context. The last four show a "not part of this practice" page with a link back to EDU 101.
 5. **Practice Help** offers Watch the walkthrough, Guide me (one action at a time with a spotlight and coach, which the learner can exit at any point) and What can I do here?
 6. **Practice Summary** is labelled "Not a score". It shows the current class state and the actions attempted as separate panels, a self-check for each tab, the transfer prompt, Continue Practice (to any tab), Reset Sandbox and Finish.
@@ -50,6 +50,8 @@ Miva Open University · Interactive and Immersive Learning Team.
 
 **Assets.**
 
+- **Opener artwork:** `source/brand/` holds the three partner logos (`ekiti.svg`, `miva.svg`, `tof.svg`), the `chevrons.svg` motif and the house spec `OPENER.md`, all as supplied. `ekiti.svg` and `tof.svg` carry bitmaps inside the SVG, so the crest is the heaviest asset in the build (474 KB before encoding).
+- **Opener type:** Afacad (variable), from Fontsource under the OFL, used for the opener title only.
 - **Logo:** the Miva Open University logo, in `source/brand/`. The blue version is used on light backgrounds (the top bar and the Finish screen) and the white version on dark ones (the welcome panel and the walkthrough end card). It replaces the Google Classroom logo and the old "MIVA · Open University · Interactive and Immersive Learning" text mark.
 - **Fonts:** Google Sans, Google Sans Flex and Roboto, from Fontsource under the OFL.
 - **Icons:** a subset of Material Symbols Outlined, under Apache-2.0.
@@ -75,7 +77,7 @@ Miva Open University · Interactive and Immersive Learning Team.
 
 ## Verification
 
-The suite has **70** checks (51 original, 9 for the tab intro cards, 2 for assignment-edit logging, 8 for the opener and the walkthrough autoplay that follows it, including the muted fallback) (`source/test/verify.py`), plus a player check. They cover:
+The suite has **69** checks (51 original, 9 for the tab intro cards, 2 for assignment-edit logging, 7 for the opener and the walkthrough handover). The opener checks follow the sign-off list in `source/brand/OPENER.md`: no two logos overlap at any sampled frame, each stage settles centred, all three fit at 375px with no sideways scroll, the motif stays at 0.7, each logo keeps its institution's alt text, Begin takes focus, and reduced motion shows the finished frame (`source/test/verify.py`), plus a player check. They cover:
 
 - seeded state
 - empty and whitespace-only input blocked everywhere

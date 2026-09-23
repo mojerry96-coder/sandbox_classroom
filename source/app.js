@@ -504,8 +504,8 @@ function maybeIntro(t){
     showIntro(t,$("#tab-"+t))},0);
 }
 function showIntro(t,trigger){
-  introSeen[t]=true;if(document.querySelector(".dlg.intro"))return;const x=INTROS[t];
-  makeModal("scrim","dlg intro","cdT",`<div class="iv" role="img" aria-label="${esc(x.label)}" style="--d:${INTRO_DUR[t]}">${x.svg()}</div>
+  introSeen[t]=true;if(document.querySelector(".dlg.tabcard"))return;const x=INTROS[t];
+  makeModal("scrim","dlg tabcard","cdT",`<div class="iv" role="img" aria-label="${esc(x.label)}" style="--d:${INTRO_DUR[t]}">${x.svg()}</div>
     <h2 id="cdT">${esc(x.title)}</h2><p id="ivBody">${esc(x.body)}</p>
     <div class="acts"><button class="tb" id="introOk" data-close>Got it</button></div>`,
   d=>{d.setAttribute("aria-describedby","ivBody");d.querySelector("#introOk").focus()},trigger);
@@ -755,20 +755,52 @@ function showFinish(){const t=UI.transfer.trim();const el=$("#finish");
    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:26px"><button class="simbtn ghost" id="finBack">${I("arrow_back")}Back to summary</button><button class="simbtn" id="finAgain">${I("restart_alt")}Start a fresh sandbox</button></div></div></div>`;
   showScreen("finish");$("#finTitle").focus();$("#finBack").onclick=openSummary;$("#finAgain").onclick=resetSandbox}
 
-/* Miva opener: covers the welcome screen on load for ~5 s. Skip, Escape or the timer ends it,
-   then focus moves to Begin Practice. Reduced motion shows the still composition briefly. */
+/* ======================================================================
+   OPENER — house spec (brand/OPENER.md). The three partner logos arrive one at
+   a time; the row re-centres on each arrival, so what is on screen stays centred
+   and nothing overlaps. Ends on a still frame with Begin, which hands over to the
+   walkthrough — that click is also what lets the video play with sound.
+   ====================================================================== */
 let openerEnd=null;
 function playOpener(){
-  const o=$("#opener"),w=$("#welcome");if(!o){$("#beginBtn").focus();return}
-  w.inert=true;let t=0;
-  const key=e=>{if(e.key==="Escape"){e.preventDefault();end()}};
-  /* when it ends, the walkthrough opens and plays (not under reduced motion, and not if this build has no video) */
-  const end=(walkthrough=true)=>{if(!openerEnd)return;openerEnd=null;clearTimeout(t);document.removeEventListener("keydown",key,true);o.remove();w.inert=false;
+  const intro=$("#intro");if(!intro){$("#beginBtn").focus();return}
+  const row=intro.querySelector(".intro-logos"),logos=$$("#intro .intro-logo");
+  const begin=$("#introBegin"),skip=$("#introSkip"),w=$("#welcome");
+  const reduced=reduceMotion(),timers=[];let shown=1,finished=false;
+  const at=(ms,fn)=>timers.push(setTimeout(fn,ms));
+  w.inert=true;
+  /* Layout positions only: getBoundingClientRect would include the entry scale.
+     Measured inside the row: its transform makes it the offset parent of the logos, so mixing
+     their offsets with the row's own offsetLeft would shift the line by that amount. */
+  const centreOn=n=>{const vis=logos.slice(0,Math.max(n,1)),a=vis[0],z=vis[vis.length-1];
+    const base=a.offsetParent===row?0:row.offsetLeft;
+    const mid=(a.offsetLeft+z.offsetLeft+z.offsetWidth)/2-base;
+    row.style.setProperty("--shift",(row.offsetWidth/2-mid)+"px")};
+  const showBegin=()=>{timers.forEach(clearTimeout);logos.forEach(el=>el.classList.add("in","set"));centreOn(logos.length);
+    intro.classList.add("st-line","st-title","st-begin");begin.focus({preventScroll:true})};
+  const finish=(walkthrough=true)=>{if(finished)return;finished=true;openerEnd=null;timers.forEach(clearTimeout);
+    document.removeEventListener("keydown",key,true);removeEventListener("resize",onResize);
+    intro.classList.add("out");setTimeout(()=>intro.remove(),reduced?0:700);w.inert=false;
     const hasVideo=!!VIDEO_SRC&&!VIDEO_SRC.startsWith("/*");
-    if(walkthrough&&hasVideo){openPlayer($("#beginBtn"),{auto:!reduceMotion()})}else $("#beginBtn").focus()};
-  openerEnd=end;document.addEventListener("keydown",key,true);
-  $("#openerSkip").onclick=()=>end();$("#openerSkip").focus();
-  t=setTimeout(end,reduceMotion()?1800:4950);
+    if(walkthrough&&hasVideo)openPlayer($("#beginBtn"),{auto:true});else $("#beginBtn").focus()};
+  const key=e=>{if(finished||e.key!=="Escape")return;e.preventDefault();showBegin()};
+  const onResize=()=>centreOn(shown);
+  openerEnd=()=>finish(false);
+  begin.onclick=()=>finish();skip.onclick=showBegin;
+  document.addEventListener("keydown",key,true);addEventListener("resize",onResize);
+  if(reduced){showBegin();return}
+  skip.focus();
+  const play=()=>{if(finished)return;centreOn(1);
+    const ENTER=350,GAP=1000,HOLD=700;
+    logos.forEach((el,i)=>{at(ENTER+i*GAP,()=>{shown=i+1;centreOn(shown);el.classList.add("in")});
+      at(ENTER+i*GAP+HOLD,()=>el.classList.add("set"))});
+    const settled=ENTER+(logos.length-1)*GAP+HOLD;
+    at(settled+500,()=>intro.classList.add("st-line"));
+    at(settled+750,()=>intro.classList.add("st-title"));
+    at(settled+1400,()=>{intro.classList.add("st-begin");begin.focus({preventScroll:true})})};
+  /* the logos must be laid out before the centring offsets mean anything */
+  const imgs=$$("#intro .intro-logo img");
+  Promise.all(imgs.map(im=>im.complete?null:new Promise(r=>{im.onload=im.onerror=r}))).then(()=>requestAnimationFrame(play));
 }
 
 /* boot: Miva opener, then the welcome screen */

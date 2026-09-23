@@ -11,14 +11,17 @@ faces=[("Google Sans",400,F+"google-sans-latin-400-normal.woff2"),
 ("Roboto",400,F+"roboto-latin-400-normal.woff2"),
 ("Roboto",500,F+"roboto-latin-500-normal.woff2")]
 ff="".join(f'@font-face{{font-family:"{n}";font-style:normal;font-weight:{w};font-display:swap;src:url(data:font/woff2;base64,{b64(p)}) format("woff2")}}\n' for n,w,p in faces)
+ff+=f'@font-face{{font-family:"Afacad";font-style:normal;font-weight:100 900;font-display:swap;src:url(data:font/woff2;base64,{b64(F+"afacad-var.woff2")}) format("woff2-variations")}}\n'
 ff+=f'@font-face{{font-family:"Material Symbols Outlined";font-style:normal;font-weight:100 700;font-display:block;src:url(data:font/woff2;base64,{b64(F+"ms-sub.woff2")}) format("woff2")}}\n'
 icons=json.load(open(F+'icons.json'))
 B=R+'/brand/'
 logos={'@@LOGO_BLUE@@':'data:image/png;base64,'+b64(B+'miva-logo-blue.png'),'@@LOGO_WHITE@@':'data:image/png;base64,'+b64(B+'miva-logo-white.png')}
+for k,f in (('EKITI','ekiti.svg'),('MIVA_SVG','miva.svg'),('TOF','tof.svg'),('CHEVRONS','chevrons.svg')):
+    logos['@@LOGO_%s@@'%k]='data:image/svg+xml;base64,'+b64(B+f)
 def brand(s):
     for k,v in logos.items(): s=s.replace(k,v)
     return s
-css=open(R+'/styles.css').read().replace('/*@@FONTFACES@@*/',ff)
+css=brand(open(R+'/styles.css').read().replace('/*@@FONTFACES@@*/',ff))  # the chevron motif is a CSS background
 body=brand(open(R+'/body.html').read())
 body=re.sub(r'@@I:([a-z_]+)@@',lambda m:f'<span class="ms" aria-hidden="true">&#x{icons[m.group(1)][2:]};</span>',body)
 js=brand(open(R+'/app.js').read())

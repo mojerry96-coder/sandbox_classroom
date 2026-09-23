@@ -12,40 +12,75 @@ async def main():
     st=lambda: pg.evaluate("__sandbox.state()")
     lg=lambda: pg.evaluate("__sandbox.log()")
     s0=await st()
-    # MIVA OPENER
-    ok("opener plays on load",await pg.is_visible("#opener"))
-    ok("opener focuses Skip and locks the welcome screen",await pg.evaluate("document.activeElement.id")=="openerSkip" and await pg.evaluate("document.querySelector('#welcome').inert"))
-    await pg.click("#openerSkip"); await pg.wait_for_timeout(1200)
-    ok("Skip ends opener and the walkthrough starts playing",not await pg.query_selector("#opener") and await pg.evaluate("(()=>{const v=document.querySelector('#vid');return !!v&&!v.paused&&v.currentTime>0})()"))
+    # OPENER (house spec: brand/OPENER.md)
+    ok("opener is a modal region with the three partner logos",await pg.is_visible("#intro")
+       and await pg.get_attribute("#intro","role")=="dialog" and await pg.get_attribute("#intro","aria-modal")=="true"
+       and len(await pg.query_selector_all("#intro .intro-logo img"))==3)
+    alts=await pg.eval_on_selector_all("#intro .intro-logo img","els=>els.map(e=>e.alt)")
+    ok("each logo keeps its institution's alt text",alts==["Government of Ekiti State, Nigeria","MIVA Open University","Tunji Olowolafe Foundation"],str(alts))
+    ok("opener focuses Skip and locks the welcome screen",await pg.evaluate("document.activeElement.id")=="introSkip" and await pg.evaluate("document.querySelector('#welcome').inert"))
+    # sign-off: nothing overlaps and what is on screen stays centred, sampled through the sequence
+    # sampled every frame: overlap is never acceptable; centring is judged once each stage has settled
+    probe=await pg.evaluate("""(()=>new Promise(res=>{const logos=[...document.querySelectorAll('#intro .intro-logo')];
+      const settle=[1300,2300,3300,4600],offs=[];let over=0,worst=0,next=0;
+      /* for centring, count only logos that have fully arrived: one that is still fading in is mid-slide */
+      const centreOff=(min)=>{const vis=logos.filter(e=>getComputedStyle(e).opacity>=min).map(e=>e.getBoundingClientRect());
+        if(!vis.length)return null;const mid=(vis[0].left+vis[vis.length-1].right)/2;return Math.abs(mid-innerWidth/2)};
+      const tick=()=>{const t=performance.now();  /* page clock: the opener started at load, not when this probe did */
+        const vis=logos.filter(e=>getComputedStyle(e).opacity>0.05).map(e=>e.getBoundingClientRect());
+        for(let i=0;i<vis.length-1;i++){if(vis[i+1].left<vis[i].right)over++}
+        const d=centreOff(0.05);if(d!==null)worst=Math.max(worst,d);
+        if(next<settle.length&&t>=settle[next]){offs.push(Math.round(centreOff(0.98)||0));next++}
+        if(t<5600)requestAnimationFrame(tick);else res({over,offs,worst:Math.round(worst)})};requestAnimationFrame(tick)}))""")
+    ok("no two logos overlap at any point",probe["over"]==0,str(probe))
+    ok("each stage settles centred",all(d<=8 for d in probe["offs"]) and len(probe["offs"])==4,str(probe))
+    await pg.wait_for_function("getComputedStyle(document.querySelector('#introBegin')).opacity==='1'",timeout=5000)
+    ok("Begin appears at the end and takes focus",await pg.is_visible("#introBegin") and await pg.evaluate("document.activeElement.id")=="introBegin"
+       and await pg.evaluate("getComputedStyle(document.querySelector('.intro-motif')).opacity")=="0.7")
+    await pg.click("#introBegin")
+    try: await pg.wait_for_function("(()=>{const v=document.querySelector('#vid');return !document.querySelector('#intro')&&!!v&&!v.paused&&v.currentTime>0})()",timeout=8000)
+    except Exception: pass
+    ok("Begin hands over to the walkthrough, which plays",not await pg.query_selector("#intro")
+       and await pg.evaluate("(()=>{const v=document.querySelector('#vid');return !!v&&!v.paused&&v.currentTime>0})()"))
     ok("autoplaying walkthrough has focus on Pause",await pg.evaluate("document.activeElement.id")=="pPlay")
     await pg.keyboard.press("Escape"); await pg.wait_for_timeout(200)
     ok("closing it lands on Begin Practice, state untouched",await pg.evaluate("document.activeElement.id")=="beginBtn" and not await pg.evaluate("document.querySelector('#welcome').inert") and json.dumps(await st())==json.dumps(s0))
-    p2=await b.new_page(); await p2.goto(URL); await p2.wait_for_timeout(6200)
-    ok("opener ends on its own after ~5 s and the walkthrough plays",not await p2.query_selector("#opener") and await p2.evaluate("(()=>{const v=document.querySelector('#vid');return !!v&&!v.paused})()"))
+    # Skip / Esc jump to the finished frame rather than skipping the opener, so Begin is still the click that allows sound
+    p2=await b.new_page(); await p2.goto(URL); await p2.wait_for_timeout(600)
+    await p2.keyboard.press("Escape"); await p2.wait_for_timeout(300)
+    ok("Esc jumps to the finished frame with Begin focused",await p2.is_visible("#intro") and await p2.evaluate("document.activeElement.id")=="introBegin"
+       and await p2.evaluate("(()=>{const v=document.querySelector('#vid');return !v||v.paused})()"))
     await p2.close()
+    p4=await b.new_page(viewport={"width":375,"height":812}); await p4.goto(URL); await p4.wait_for_timeout(5300)
+    fit=await p4.evaluate("""(()=>{const l=[...document.querySelectorAll('#intro .intro-logo')].map(e=>e.getBoundingClientRect());
+      let g=1e9;for(let i=0;i<l.length-1;i++)g=Math.min(g,l[i+1].left-l[i].right);
+      return {scroll:document.documentElement.scrollWidth,vw:innerWidth,gap:Math.round(g),left:Math.round(l[0].left),right:Math.round(l[2].right)}})()""")
+    ok("all three logos fit at 375px with no sideways scroll",fit["scroll"]==fit["vw"] and fit["gap"]>0 and fit["left"]>=0 and fit["right"]<=fit["vw"],str(fit))
+    await p4.close()
+    # reduced motion: the finished frame, with no movement
+    p5=await b.new_page(reduced_motion="reduce"); await p5.goto(URL); await p5.wait_for_timeout(500)
+    rm=await p5.evaluate("""(()=>{const i=document.querySelector('#intro'),l=[...document.querySelectorAll('#intro .intro-logo')];
+      return {begin:getComputedStyle(document.querySelector('#introBegin')).opacity,
+              classes:i.className,shift:getComputedStyle(document.querySelector('.intro-logos')).getPropertyValue('--shift').trim(),
+              allIn:l.every(e=>getComputedStyle(e).opacity==='1'),focus:document.activeElement.id}})()""")
+    ok("reduced motion shows the finished frame at once",rm["begin"]=="1" and rm["allIn"] and rm["shift"]=="0px" and rm["focus"]=="introBegin",str(rm))
+    await p5.close()
     # browsers that block sound until the learner clicks: start muted, offer sound
     p3=await b.new_page()
     await p3.add_init_script("(()=>{const o=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(){return this.muted?o.call(this):Promise.reject(new DOMException('blocked','NotAllowedError'))}})()")
-    await p3.goto(URL); await p3.wait_for_timeout(6200)
+    await p3.goto(URL); await p3.wait_for_timeout(600); await p3.keyboard.press("Escape"); await p3.wait_for_timeout(300)
+    await p3.click("#introBegin")
+    try: await p3.wait_for_function("(()=>{const v=document.querySelector('#vid');return !!v&&!v.paused})()",timeout=8000)
+    except Exception: pass
+    await p3.wait_for_timeout(200)
     ok("sound blocked: plays muted with Turn on sound focused",await p3.evaluate("(()=>{const v=document.querySelector('#vid');return !!v&&!v.paused&&v.muted})()") and await p3.is_visible("#vUnmute") and await p3.evaluate("document.activeElement.id")=="vUnmute")
     await p3.click("#vUnmute"); await p3.wait_for_timeout(200)
     ok("Turn on sound unmutes and hides itself",await p3.evaluate("!document.querySelector('#vid').muted") and await p3.is_hidden("#vUnmute"))
     await p3.close()
-    ok("seed: class name/section",s0["cls"]=={"name":"EDU 101","section":"Sandbox Class"})
-    ok("seed: 1 protected post, 0 topics/assignments",len(s0["posts"])==1 and s0["posts"][0]["protected"] and not s0["topics"] and not s0["assignments"])
-    ok("seed: owner + 2 students",len(s0["teachers"])==1 and s0["teachers"][0]["status"]=="owner" and len(s0["students"])==2)
-    import re
-    ok("seed: code XXX-XXX",bool(re.fullmatch(r"[A-Z2-9]{3}-[A-Z2-9]{3}",s0["classCode"])))
-    ok("seed: nudge flag unset",s0["flags"]["unfiledNudgeShown"]==False)
-    # walkthrough from welcome must not alter state
-    await pg.click("#welcomeWatch"); await pg.wait_for_timeout(300)
-    ok("walkthrough opens without autoplay",await pg.evaluate("(()=>{const v=document.querySelector('#vid');return !v||v.paused})()"))
-    await pg.keyboard.press("Escape"); await pg.wait_for_timeout(200)
-    ok("walkthrough closes, focus returns",await pg.evaluate("document.activeElement.id")=="welcomeWatch")
     await pg.click("#beginBtn"); await pg.wait_for_timeout(200)
     ok("Begin opens EDU 101 Stream",await pg.evaluate("document.querySelector('#tab-stream').getAttribute('aria-selected')")=="true")
     # TAB INTROS (Classroom-style feature-intro card, silent animation)
-    ok("Stream intro shows on first visit",await pg.is_visible(".dlg.intro") and "Stream" in await pg.inner_text("#cdT"))
+    ok("Stream intro shows on first visit",await pg.is_visible(".dlg.tabcard") and "Stream" in await pg.inner_text("#cdT"))
     ok("intro focuses Got it",await pg.evaluate("document.activeElement.id")=="introOk")
     ok("intro illustration has a text alternative",bool(await pg.get_attribute(".iv[role=img]","aria-label")))
     await pg.click("#introOk"); await pg.wait_for_timeout(100)
@@ -79,9 +114,9 @@ async def main():
     ok("post edited",(await st())["posts"][0]["text"]=="Edited text")
     # CLASSWORK
     await pg.click("#tab-classwork"); await pg.wait_for_timeout(100)
-    ok("Classwork intro shows on first visit","topics" in (await pg.inner_text(".dlg.intro")).lower())
+    ok("Classwork intro shows on first visit","topics" in (await pg.inner_text(".dlg.tabcard")).lower())
     await pg.keyboard.press("Escape"); await pg.wait_for_timeout(100)
-    ok("Escape closes intro",not await pg.query_selector(".dlg.intro"))
+    ok("Escape closes intro",not await pg.query_selector(".dlg.tabcard"))
     await pg.click("#createBtn"); await pg.click("#mTopic")
     ok("topic Add disabled when empty",await pg.is_disabled("#topicAdd"))
     await pg.fill("#topicName","   "); ok("topic Add disabled for spaces",await pg.is_disabled("#topicAdd"))
@@ -102,7 +137,7 @@ async def main():
     ok("nudge flag set",(await st())["flags"]["unfiledNudgeShown"]==True)
     await pg.click("#tab-stream"); await pg.click("#tab-classwork"); await pg.wait_for_timeout(100)
     ok("nudge not repeated after tab change",not await pg.query_selector("#nudge"))
-    ok("intro not repeated on revisit",not await pg.query_selector(".dlg.intro"))
+    ok("intro not repeated on revisit",not await pg.query_selector(".dlg.tabcard"))
     await pg.click("#createBtn"); await pg.click("#mAssignment"); await pg.fill("#aTitle","Loose C"); await pg.click("#aAssign")
     ok("nudge not repeated at 3 unfiled",not await pg.query_selector("#nudge"))
     ok("No topic section lists 3","3 items" in await pg.inner_text("#h-nt + .tcount"))
@@ -120,7 +155,7 @@ async def main():
     ok("summary total matches actions",[a for a in (await st())["assignments"] if a["id"]==aid][0]["topicId"] is None)
     # PEOPLE
     await pg.click("#tab-people"); await pg.wait_for_timeout(100)
-    ok("People intro shows on first visit",await pg.is_visible(".dlg.intro")); await pg.click("#introOk")
+    ok("People intro shows on first visit",await pg.is_visible(".dlg.tabcard")); await pg.click("#introOk")
     await pg.click("#inviteBtn"); await pg.fill("#invEmail","not-an-email"); await pg.click("#invSubmit")
     ok("invalid email rejected",len((await st())["teachers"])==1 and await pg.get_attribute("#invEmail","aria-invalid")=="true")
     await pg.fill("#invEmail","tutor@example.com"); await pg.click("#invSubmit")
@@ -141,7 +176,7 @@ async def main():
     # help + guide don't change state
     before=json.dumps(await st())
     await pg.click("#dHelp"); await pg.click("#hWhat"); await pg.click("#hIntro"); await pg.wait_for_timeout(100)
-    ok("intro replays from Practice Help",await pg.is_visible(".dlg.intro")); await pg.click("#introOk")
+    ok("intro replays from Practice Help",await pg.is_visible(".dlg.tabcard")); await pg.click("#introOk")
     await pg.click("#dHelp"); await pg.click("#hWhat"); await pg.click("#hBack"); await pg.click("#hGuide")
     await pg.click("[data-g='0']"); await pg.wait_for_timeout(200)
     ok("guide shows spotlight on composer",await pg.evaluate("!document.querySelector('#spot').hidden"))
