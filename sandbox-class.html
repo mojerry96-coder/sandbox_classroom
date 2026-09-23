@@ -270,6 +270,43 @@ body.rail .ni .rlbl{display:block;font:400 12px/16px var(--fs);text-align:center
 @keyframes snack{from{opacity:.001;transform:translateY(12px)}}
 @media (max-width:600px){.snack{left:16px;right:16px;min-width:0;bottom:92px}}
 
+/* ---- Role picker (simulation layer) ---- */
+.rolewrap{min-height:100%;display:grid;place-items:center;padding:40px 16px}
+.rolecard{max-width:720px;width:100%;text-align:left}
+.rolecard h1{font:500 clamp(28px,4vw,40px)/1.1 var(--fs);color:var(--sim-ink);margin:10px 0 12px}
+.rolecard .sub{font:400 16px/24px var(--fs);color:var(--sim-muted);margin:0 0 28px;max-width:60ch}
+.rolecard .eb{font:600 12px/16px var(--fs);letter-spacing:.16em;text-transform:uppercase;color:var(--sim-teal)}
+.roleopts{display:grid;gap:14px}
+.roleopt{display:flex;align-items:center;gap:16px;width:100%;text-align:left;min-height:88px;padding:18px 20px;border-radius:18px;border:1px solid var(--sim-line);background:#fff;color:var(--sim-text)}
+.roleopt:hover{border-color:var(--sim-gold);background:#FFFDF7}
+.roleopt>.ms:first-child{width:48px;height:48px;border-radius:50%;background:var(--sim-ink);color:var(--sim-gold-2);display:grid;place-items:center;flex:none}
+.roleopt b{display:block;font:500 18px/24px var(--fs);margin-bottom:4px}
+.roleopt .s{display:block;font:400 14px/20px var(--fs);color:var(--sim-muted)}
+.roleopt span:nth-child(2){flex:1}
+.roleopt .go{color:var(--sim-muted)}
+.rolecard .fine{display:flex;align-items:center;gap:8px;margin-top:24px;font:400 13px/18px var(--fs);color:var(--sim-muted)}
+
+/* ---- Home: Teaching / Enrolled segmented control (48px, check on the selected segment) ---- */
+.home .seg{display:inline-flex;align-items:center;border:1px solid var(--ol);border-radius:9999px;overflow:hidden;margin:4px 0 4px 8px;align-self:flex-start}
+.home .seg button{min-height:48px;padding:0 24px;display:inline-flex;align-items:center;gap:8px;font:500 14px/20px var(--ff);color:var(--onv)}
+.home .seg button[aria-selected=true]{background:var(--pric);color:var(--pri)}
+.home .seg .ms{font-size:18px}
+
+/* ---- Create class / gate / join class ---- */
+.dlg .cbrow{display:flex;gap:12px;align-items:flex-start;margin:20px 0 4px;font:400 14px/20px var(--fs)}
+.dlg .cbrow input{width:18px;height:18px;margin:1px 0 0;accent-color:var(--pri-filled);flex:none}
+.filled.cc{margin-bottom:16px}
+.jcard{background:var(--schh);border-radius:12px;padding:16px;margin-bottom:16px}
+.jcard .k{font:500 14px/20px var(--fs);color:var(--onv);margin-bottom:10px}
+.jcard .who{display:flex;align-items:center;gap:12px}
+.jcard .who .n{flex:1;font:400 16px/24px var(--fs)}
+.jcard .who small{display:block;font:400 13px/18px var(--fs);color:var(--onv)}
+.jbul{margin:8px 0 16px;padding-left:22px;color:var(--onv);font:400 14px/22px var(--fs)}
+
+/* two-line class entries in the drawer */
+.ni .lbl small{display:block;font:400 12px/16px var(--fs);color:var(--onv);overflow:hidden;text-overflow:ellipsis}
+.ni.act .lbl small{color:var(--pri)}
+
 /* Help FAB: 48px, rgba(255,255,255,.85), bottom-right, on every screen */
 .fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:48px;height:48px;border-radius:24px;background:var(--fab-bg);color:var(--onv);display:grid;place-items:center;z-index:65;border:1px solid var(--outline-variant,#DADCE0)}
 .fab:hover{background:#fff}
@@ -633,6 +670,9 @@ body.dock-on .fab{bottom:calc(84px + env(safe-area-inset-bottom,0px))}  /* clear
   </div>
 </section>
 
+<!-- ======================= ROLE PICKER (Workspace first-run beat) ======================= -->
+<section id="role" class="miva" hidden aria-labelledby="roleTitle"></section>
+
 <!-- ======================= CLASSROOM SHELL (reference-accurate layer) ======================= -->
 <div id="shell" hidden>
   <header class="topbar" id="topbar">
@@ -690,34 +730,42 @@ function genCode(prev){let c;do{c="";for(let i=0;i<6;i++){c+=ALPH[Math.floor(Mat
 function spellCode(c){return c.replace("-"," dash ").split("").join(" ").replace(/ +/g," ")}
 
 /* ---------------- state ---------------- */
-let S,L,UI,seq;
+let S,L,UI,seq,A;  /* A: the class currently open */
 const nid=p=>p+(++seq);
 function seed(){
   seq=0;
-  S={
-    cls:{name:"EDU 101",section:"Sandbox Class"},
-    posts:[{id:"post-welcome",author:"Miva Learning Team",when:"Sep 15",edited:false,protected:true,
-      text:"Welcome to EDU 101! This sandbox class is yours to practise in. Post, organise, invite and reset as often as you like. Nothing here reaches a real student."}],
-    topics:[],        // {id,name}
-    assignments:[],   // {id,title,instructions,topicId|null,edited}
-    teachers:[{id:"t-owner",name:"You",email:"",status:"owner"}],
-    students:[{id:nid("u"),name:"Amina Bello",placeholder:true},{id:nid("u"),name:"Tobi Adeyemi",placeholder:true}],
-    classCode:genCode(null),
-    flags:{unfiledNudgeShown:false}
-  };
-  L={tabsVisited:[],tabOpens:{stream:0,classwork:0,people:0},
+  /* Nothing is set up in advance: the learner picks a role, then creates (or joins) the class. */
+  S={user:{role:null,name:"You"},classes:[],activeId:null,flags:{unfiledNudgeShown:false,gateSeen:false}};
+  L={role:null,classesCreated:0,classesJoined:0,
+     tabsVisited:[],tabOpens:{stream:0,classwork:0,people:0},
      postsCreated:0,postsEdited:0,postsRemoved:0,
      topicsCreated:0,topicsRenamed:0,topicsRemoved:0,
      assignmentsCreated:0,createdFiled:0,createdUnfiled:0,assignmentsEdited:0,assignmentsMoved:0,assignmentsRemoved:0,
      nudgeShown:false,
      invitesSent:0,invitesCancelled:0,studentsAdded:0,studentsRemoved:0,codeRegenerations:0};
-  UI={view:"class",tab:"stream",composerOpen:false,draft:"",editingPost:null,editDraft:"",nudgeVisible:false,
-      enrolledOpen:true,self:{},transfer:"",placeholder:null};
+  UI={view:"role",tab:"stream",composerOpen:false,draft:"",editingPost:null,editDraft:"",nudgeVisible:false,
+      enrolledOpen:true,teachingOpen:true,self:{},transfer:"",placeholder:null,homeView:"teaching"};
+  A=null;
 }
 seed();
-const unfiled=()=>S.assignments.filter(a=>!a.topicId);
-const inTopic=id=>S.assignments.filter(a=>a.topicId===id);
-const pendingTeachers=()=>S.teachers.filter(t=>t.status==="pending");
+const unfiled=()=>A.assignments.filter(a=>!a.topicId);
+const owner=()=>!!A&&A.role==="owner";
+function makeClass(f,role){
+  const c={id:nid("c-"),name:f.name,section:f.section||"",level:f.level||"",subject:f.subject||"",room:f.room||"",
+    role,code:genCode(null),theme:"Light blue",
+    posts:[],topics:[],assignments:[],
+    teachers:[],students:[]};
+  if(role==="owner")c.teachers.push({id:"t-owner-"+c.id,name:"You",email:"",status:"owner"});
+  else{
+    c.teachers.push({id:nid("t-"),name:f.teacher||"Ada Okafor",email:"",status:"owner"});
+    c.students.push({id:nid("u"),name:"You",placeholder:false,isYou:true});
+    c.posts.push({id:nid("post-"),author:f.teacher||"Ada Okafor",when:"Just now",edited:false,protected:true,
+      text:"Welcome to the class. Everything you need for this week is under Classwork."});
+  }
+  S.classes.push(c);return c;
+}
+const inTopic=id=>A.assignments.filter(a=>a.topicId===id);
+const pendingTeachers=()=>A.teachers.filter(t=>t.status==="pending");
 
 /* ---------------- feedback ---------------- */
 function announce(m){const l=$("#live");l.textContent="";setTimeout(()=>{l.textContent=m},40)}
@@ -732,6 +780,7 @@ function emit(e){Guide.on(e)}
    ====================================================================== */
 function showScreen(name){
   $("#welcome").hidden=name!=="welcome";
+  $("#role").hidden=name!=="role";
   $("#shell").hidden=name!=="shell";
   $("#dock").hidden=name!=="shell";
   document.body.classList.toggle("dock-on",name==="shell");
@@ -739,8 +788,94 @@ function showScreen(name){
   $("#finish").hidden=name!=="finish";
   if(name!=="shell")Guide.exit(true);
 }
-$("#beginBtn").onclick=()=>{showScreen("shell");openClass("stream");focusTab()};
+$("#beginBtn").onclick=()=>{showRolePicker()};
 $("#welcomeWatch").onclick=e=>openPlayer(e.currentTarget);
+
+/* ======================================================================
+   CREATE / JOIN A CLASS (SPEC §6.1-6.3, §6.9). Copy is the pack's, verbatim.
+   ====================================================================== */
+function startCreateClass(trigger){
+  if(S.flags.gateSeen)return openCreateClass(trigger);
+  cDialog(`<h2 id="cdT">Using Classroom at a school with students?</h2>
+   <p>If so, your school must sign up for a <a href="#" data-x>Google Workspace for Education</a> account before you can use Classroom. <a href="#" data-x>Learn More</a></p>
+   <p>Google Workspace for Education lets schools decide which Google services their students can use, and provides additional <a href="#" data-x>privacy and security</a> protections that are important in a school setting. Students cannot use Google Classroom at a school with personal accounts.</p>
+   <label class="cbrow"><input type="checkbox" id="gateBox"><span>I've read and understand the above notice, and I'm not using Classroom at a school with students</span></label>
+   <div class="acts"><button class="tb" data-close>Go back</button><button class="tb" id="gateGo" disabled>Continue</button></div>`,
+  (d,close)=>{const box=d.querySelector("#gateBox"),go=d.querySelector("#gateGo");
+    d.querySelectorAll("[data-x]").forEach(a=>a.onclick=e=>{e.preventDefault();snack("External help pages aren't part of this practice.")});
+    box.onchange=()=>{go.disabled=!box.checked;if(box.checked)emit("gate:ticked")};
+    go.onclick=()=>{S.flags.gateSeen=true;close(true);openCreateClass(trigger)}},trigger);
+  emit("gate:open");
+}
+function openCreateClass(trigger){
+  const F=[["className","Class name","*"],["section","Section",""],["level","Level(s)",""],["subject","Subject",""],["room","Room",""]];
+  cDialog(`<h2 id="cdT">Create class</h2>
+   <form id="ccForm" novalidate>
+    ${F.map(([id,label,req],i)=>`<div class="filled cc"><label for="${id}">${label}${req?"*":""}</label><input id="${id}" autocomplete="off" maxlength="80" ${i===0?'aria-required="true" aria-describedby="ccHelp"':""}></div>${i===0?`<div class="help" id="ccHelp">*Required</div>`:""}`).join("")}
+    <div class="acts"><button type="button" class="tb" data-close id="ccCancel">Cancel</button><button class="tb" id="ccCreate" disabled>Create</button></div>
+   </form>`,
+  (d,close)=>{const name=d.querySelector("#className"),create=d.querySelector("#ccCreate");name.focus();
+    name.oninput=()=>{create.disabled=!name.value.trim();if(name.value.trim())emit("class:name")};
+    d.querySelector("#ccForm").onsubmit=e=>{e.preventDefault();const n=name.value.trim();if(!n)return;
+      /* the submitting state the pack asks for: fields grey out, Cancel greys out, label reads Creating… */
+      d.querySelectorAll("input").forEach(i=>{i.disabled=true});
+      d.querySelector("#ccCancel").disabled=true;create.disabled=true;create.textContent="Creating…";
+      const f={name:n,section:d.querySelector("#section").value.trim(),level:d.querySelector("#level").value.trim(),
+               subject:d.querySelector("#subject").value.trim(),room:d.querySelector("#room").value.trim()};
+      setTimeout(()=>{const c=makeClass(f,"owner");L.classesCreated++;close(true);
+        openClass(c.id,"stream");snack(`Class “${excerpt(c.name,30)}” created. Its code is ${c.code}.`);emit("class:created")},700)}},trigger);
+  emit("class:dialog");
+}
+function openJoinClass(trigger){
+  cDialog(`<h2 id="cdT">Join class</h2>
+   <div class="jcard"><div class="k">You're currently signed in as</div><div class="who"><span class="la" style="background:#5C6BC0">Y</span><div class="n">You<small>you@example.com</small></div><button class="ob" id="jcSwitch">Switch account</button></div></div>
+   <div class="jcard"><div class="k">Class code</div><p style="margin:0 0 12px">Ask your teacher for the class code, then enter it here.</p>
+     <form id="jcForm" novalidate><div class="field of"><input id="jcCode" autocomplete="off" maxlength="8" placeholder=" " aria-describedby="jcHelp"><label for="jcCode">Class code</label></div><div class="help" id="jcHelp">5-8 letters or numbers</div></form></div>
+   <p style="margin-top:16px"><b>To sign in with a class code</b></p>
+   <ul class="jbul"><li>Use an authorized account</li><li>Use a class code with 5-8 letters or numbers, and no spaces or symbols</li></ul>
+   <p style="color:var(--onv)">If you have trouble joining the class, go to the Help Center article</p>
+   <div class="acts"><button type="button" class="tb" data-close>Cancel</button><button class="tb" id="jcJoin" disabled>Join</button></div>`,
+  (d,close)=>{const code=d.querySelector("#jcCode"),join=d.querySelector("#jcJoin"),help=d.querySelector("#jcHelp");
+    d.querySelector("#jcSwitch").onclick=()=>snack("Switching accounts isn't part of this practice.");
+    const valid=v=>/^[A-Za-z0-9]{5,8}$/.test(v);
+    code.oninput=()=>{const v=code.value.trim();join.disabled=!v;
+      if(code.getAttribute("aria-invalid")&&valid(v)){code.removeAttribute("aria-invalid");help.classList.remove("err");help.textContent="5-8 letters or numbers"}};
+    const submit=e=>{e&&e.preventDefault();const v=code.value.trim();
+      if(!valid(v)){code.setAttribute("aria-invalid","true");help.classList.add("err");help.textContent="Use 5-8 letters or numbers, with no spaces or symbols.";code.focus();return}
+      const c=makeClass({name:"Design Thinking 101",section:"Cohort B",teacher:"Ada Okafor"},"student");
+      c.code=v.toUpperCase();L.classesJoined++;close(true);openClass(c.id,"stream");
+      snack(`Joined ${c.name} as a student.`);emit("class:joined")};
+    d.querySelector("#jcForm").onsubmit=submit;join.onclick=submit},trigger);
+  emit("join:dialog");
+}
+
+/* ======================================================================
+   ROLE PICKER — the Workspace first-run beat: teacher or student.
+   In the real product this is irreversible without an administrator; here
+   Reset Sandbox starts over, which is the practice equivalent.
+   ====================================================================== */
+function showRolePicker(){
+  const el=$("#role");
+  el.innerHTML=`<div class="rolewrap"><div class="rolecard">
+    <div class="eb">${esc(S.user.name)} · first sign-in</div>
+    <h1 id="roleTitle" tabindex="-1">What brings you to Classroom?</h1>
+    <p class="sub">Pick the role you want to rehearse. In Google Workspace for Education this choice is made once and only an administrator can change it. Here you can start over at any time with Reset Sandbox.</p>
+    <div class="roleopts" role="group" aria-labelledby="roleTitle">
+      <button class="roleopt" id="roleTeacher">${I("school")}<span><b>I'm a Teacher</b><span class="s">Create a class, post to it, set work and manage who is in it.</span></span>${I("arrow_forward","go")}</button>
+      <button class="roleopt" id="roleStudent">${I("group")}<span><b>I'm a Student</b><span class="s">Join a class with a code and see it the way your students will.</span></span>${I("arrow_forward","go")}</button>
+    </div>
+    <p class="fine">${I("science")}Both roles are simulated. Nothing here reaches a real class.</p>
+  </div></div>`;
+  showScreen("role");$("#roleTitle").focus();
+  $("#roleTeacher").onclick=()=>chooseRole("teacher");
+  $("#roleStudent").onclick=()=>chooseRole("student");
+}
+function chooseRole(r){
+  S.user.role=r;L.role=r;
+  showScreen("shell");goHome();
+  announce(r==="teacher"?"Teacher selected. Create your first class to begin.":"Student selected. Join a class with a code to begin.");
+  setTimeout(()=>{const b=$("#plusBtn");b&&b.focus()},80);
+}
 
 /* ======================================================================
    CLASSROOM SHELL
@@ -748,16 +883,12 @@ $("#welcomeWatch").onclick=e=>openPlayer(e.currentTarget);
 function renderAll(){renderDrawer();renderTop();renderMain()}
 function renderTop(){
   const c=$("#crumb");
-  const t=UI.view==="class"?S.cls.name:UI.view==="placeholder"?UI.placeholder:"";
+  const t=UI.view==="class"&&A?A.name:UI.view==="placeholder"?UI.placeholder:"";
   c.innerHTML=t?`${I("chevron_right")}<span class="t">${esc(t)}</span>`:"";
-  $("#topact").innerHTML=UI.view==="home"?`<button class="ib" id="plusBtn" aria-label="Create or join a class" aria-haspopup="menu" aria-expanded="false">${I("add")}</button>`:"";
+  $("#topact").innerHTML=`<button class="ib" id="plusBtn" aria-label="Create or join a class" aria-haspopup="menu" aria-expanded="false">${I("add")}</button>`;
   const pb=$("#plusBtn");
-  if(pb)pb.onclick=e=>{e.stopPropagation();openMenu(pb,[{label:"Join class",fn:()=>notInPractice(pb)},{label:"Create class",fn:()=>notInPractice(pb)}],{alignRight:true})};
+  if(pb)pb.onclick=e=>{e.stopPropagation();openMenu(pb,[{label:"Join class",fn:()=>openJoinClass(pb)},{label:"Create class",fn:()=>startCreateClass(pb)}],{alignRight:true});emit("plus:open")};
 }
-function notInPractice(trigger){simDialog(`<div class="hd"><div><span class="eb">Practice note</span><h2 id="sdT">EDU 101 is already set up for you</h2></div></div>
-  <div class="bd"><p>Joining or creating classes isn't part of this practice. Open EDU 101 to practise Stream, Classwork and People.</p>
-  <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap"><button class="simbtn ghost" data-close>Close</button><button class="simbtn" id="goEdu">${I("arrow_forward")}Open EDU 101</button></div></div>`,
-  (d,close)=>{d.querySelector("#goEdu").onclick=()=>{close(true);openClass("stream")}},trigger)}
 $("#brandLink").onclick=e=>{e.preventDefault();goHome()};
 $("#hamb").onclick=()=>{
   if(matchMedia("(max-width:1023px)").matches){document.body.classList.toggle("drawer-open");$("#hamb").setAttribute("aria-expanded",document.body.classList.contains("drawer-open"))}
@@ -765,42 +896,68 @@ $("#hamb").onclick=()=>{
 };
 function closeMobileDrawer(){document.body.classList.remove("drawer-open")}
 function renderDrawer(){
-  const act=k=>{if(UI.view==="home"&&k==="home")return"act";if(UI.view==="class"&&k==="edu")return"act";if(UI.view==="placeholder"&&UI.placeholder===k)return"act";return""};
-  $("#drawer").innerHTML=`
-   <button class="ni ${act("home")}" data-nav="home" ${act("home")?'aria-current="page"':""}>${I("home",act("home")?"fill":"")}<span class="lbl">Home</span><span class="rlbl" aria-hidden="true">Home</span></button>
-   <button class="ni ${act("Calendar")}" data-nav="Calendar">${I("calendar_today")}<span class="lbl">Calendar</span><span class="rlbl" aria-hidden="true">Calendar</span></button>
-   <div class="gap"></div>
-   <button class="ni hdr" id="teachHdr" aria-expanded="${UI.enrolledOpen}">${I("group")}<span class="lbl">Teaching</span>${I(UI.enrolledOpen?"expand_less":"expand_more","chev")}</button>
-   <div class="sub" ${UI.enrolledOpen?"":"hidden"}>
-     <button class="ni ${act("To review")}" data-nav="To review">${I("checklist")}<span class="lbl">To review</span><span class="rlbl" aria-hidden="true">To review</span></button>
-     <button class="ni ${act("edu")}" data-nav="edu" ${act("edu")?'aria-current="page"':""}><span class="ltr" aria-hidden="true">E</span><span class="lbl">EDU 101</span><span class="rlbl" aria-hidden="true">EDU 101</span></button>
-   </div>
-   <div class="gap"></div>
-   <button class="ni ${act("Archived classes")}" data-nav="Archived classes">${I("archive")}<span class="lbl">Archived classes</span><span class="rlbl" aria-hidden="true">Archived</span></button>
-   <button class="ni ${act("Settings")}" data-nav="Settings">${I("settings")}<span class="lbl">Settings</span><span class="rlbl" aria-hidden="true">Settings</span></button>`;
-  $$("#drawer [data-nav]").forEach(b=>b.onclick=()=>{closeMobileDrawer();const n=b.dataset.nav;if(n==="home")goHome();else if(n==="edu")openClass(UI.tab||"stream");else{UI.view="placeholder";UI.placeholder=n;renderAll();$("#main").focus()}});
-  $("#teachHdr").onclick=()=>{UI.enrolledOpen=!UI.enrolledOpen;renderDrawer();$("#teachHdr").focus()};
+  const act=k=>{if(UI.view==="home"&&k==="home")return"act";if(UI.view==="class"&&A&&k===A.id)return"act";if(UI.view==="placeholder"&&UI.placeholder===k)return"act";return""};
+  const teaching=S.classes.filter(c=>c.role==="owner"),enrolled=S.classes.filter(c=>c.role==="student");
+  const item=(k,icon,label,rail)=>`<button class="ni ${act(k)}" data-nav="${k}" ${act(k)?'aria-current="page"':""}>${I(icon,act(k)?"fill":"")}<span class="lbl">${label}</span><span class="rlbl" aria-hidden="true">${rail||label}</span></button>`;
+  const classItem=c=>`<button class="ni ${act(c.id)}" data-class="${c.id}" ${act(c.id)?'aria-current="page"':""}><span class="ltr" aria-hidden="true">${esc(c.name.trim()[0].toUpperCase())}</span><span class="lbl">${esc(c.name)}${c.section?`<small>${esc(c.section)}</small>`:""}</span><span class="rlbl" aria-hidden="true">${esc(excerpt(c.name,9))}</span></button>`;
+  const group=(key,title,icon,label,classes,open)=>classes.length?`<div class="gap"></div>
+     <button class="ni hdr" data-group="${key}" aria-expanded="${open}">${I(icon)}<span class="lbl">${title}</span>${I(open?"expand_less":"expand_more","chev")}</button>
+     <div class="sub" ${open?"":"hidden"}>${item(label[0],label[1],label[2])}${classes.map(classItem).join("")}</div>`:"";
+  $("#drawer").innerHTML=item("home","home","Home")+item("Calendar","calendar_today","Calendar")
+    +group("teaching","Teaching","group",["To review","checklist","To review"],teaching,UI.teachingOpen)
+    +group("enrolled","Enrolled","school",["To-do","task_alt","To-do"],enrolled,UI.enrolledOpen)
+    +`<div class="gap"></div>`+item("Archived classes","archive","Archived classes","Archived")+item("Settings","settings","Settings");
+  $$("#drawer [data-nav]").forEach(b=>b.onclick=()=>{closeMobileDrawer();const n=b.dataset.nav;
+    if(n==="home")goHome();else{UI.view="placeholder";UI.placeholder=n;renderAll();$("#main").focus()}});
+  $$("#drawer [data-class]").forEach(b=>b.onclick=()=>{closeMobileDrawer();openClass(b.dataset.class,UI.tab||"stream")});
+  $$("#drawer [data-group]").forEach(b=>b.onclick=()=>{const g=b.dataset.group;
+    if(g==="teaching")UI.teachingOpen=!UI.teachingOpen;else UI.enrolledOpen=!UI.enrolledOpen;
+    renderDrawer();$(`[data-group="${g}"]`).focus()});
 }
-function goHome(){UI.view="home";renderAll();$("#main").focus()}
-function openClass(tab){UI.view="class";setTab(tab||"stream",true);renderDrawer();renderTop()}
+function goHome(){UI.view="home";A=null;S.activeId=null;renderAll();$("#main").focus()}
+function openClass(id,tab){
+  if(id){S.activeId=id;A=S.classes.find(c=>c.id===id)||null}
+  if(!A){goHome();return}
+  UI.view="class";setTab(tab||"stream",true);renderDrawer();renderTop()}
 $("#main").addEventListener("scroll",()=>$("#topbar").classList.toggle("scrolled",$("#main").scrollTop>4));
 
 function renderMain(){
   const m=$("#main");
   if(UI.view==="home")return renderHome(m);
-  if(UI.view==="placeholder"){m.innerHTML=`<div class="sheet"><div class="placeholder-page">${I("explore")}<b>${esc(UI.placeholder)} isn't part of this practice</b>This sandbox focuses on the Stream, Classwork and People tabs in EDU 101.<div style="margin-top:20px"><button class="fb" id="phGo">Open EDU 101</button></div></div></div>`;$("#phGo").onclick=()=>openClass("stream");return}
+  if(UI.view==="placeholder"){m.innerHTML=`<div class="sheet"><div class="placeholder-page">${I("explore")}<b>${esc(UI.placeholder)} isn't part of this practice</b>This sandbox focuses on the Stream, Classwork and People tabs in EDU 101.<div style="margin-top:20px"><button class="fb" id="phGo">${A?`Open ${esc(A.name)}`:"Back to Home"}</button></div></div></div>`;$("#phGo").onclick=()=>A?openClass(A.id,"stream"):goHome();return}
   renderClass(m);
 }
 
 /* ---------------- Home (reference-backed: Home screenshot) ---------------- */
+const EMPTY_HOME=`<svg width="220" height="150" viewBox="0 0 220 150" aria-hidden="true"><rect x="26" y="34" width="168" height="92" rx="12" fill="#E9EEF6"/><rect x="44" y="52" width="70" height="9" rx="4.5" fill="#A8C7FA"/><rect x="44" y="72" width="120" height="7" rx="3.5" fill="#fff"/><rect x="44" y="88" width="96" height="7" rx="3.5" fill="#fff"/><circle cx="176" cy="112" r="18" fill="#0B57D0"/><path d="M176 103v18M167 112h18" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>`;
 function renderHome(m){
-  m.innerHTML=`<div class="home"><section class="scard" aria-labelledby="clsH"><div class="shead"><h2 id="clsH">Classes</h2></div>
-   <ul class="grid"><li class="ccard"><div class="cban"><canvas class="cvs" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%"></canvas><a href="#" id="cardLink" style="position:relative">${esc(S.cls.name)}</a><div style="position:relative">${esc(S.cls.section)}</div></div>
-   <span class="cav" aria-hidden="true">Y</span><div class="cbody"></div>
-   <div class="cfoot"><button class="ib" aria-label="Open Classwork for EDU 101" id="cardCw">${I("assignment_ind")}</button><button class="ib" aria-label="Open People for EDU 101" id="cardPpl">${I("group")}</button></div></li></ul></section></div>`;
+  const teaching=S.classes.filter(c=>c.role==="owner"),enrolled=S.classes.filter(c=>c.role==="student");
+  const both=teaching.length&&enrolled.length;
+  if(both&&!["teaching","enrolled"].includes(UI.homeView))UI.homeView="teaching";
+  const list=both?(UI.homeView==="teaching"?teaching:enrolled):(teaching.length?teaching:enrolled);
+  const teacher=S.user.role==="teacher";
+  m.innerHTML=`<div class="home">
+   ${both?`<div class="seg" role="tablist" aria-label="Class role">
+     <button role="tab" id="segTeaching" aria-selected="${UI.homeView==="teaching"}" data-home="teaching">${UI.homeView==="teaching"?I("check"):""}Teaching</button>
+     <button role="tab" id="segEnrolled" aria-selected="${UI.homeView==="enrolled"}" data-home="enrolled">${UI.homeView==="enrolled"?I("check"):""}Enrolled</button></div>`:""}
+   <section class="scard" aria-labelledby="clsH"><div class="shead"><h2 id="clsH">Classes</h2></div>
+   ${list.length?`<ul class="grid">${list.map(cardHTML).join("")}</ul>`
+     :`<div class="cw-empty">${EMPTY_HOME}<b>${teacher?"Create your first class":"Join your first class"}</b>
+        <span>${teacher?"A class holds your Stream, Classwork and People. Nothing exists until you create it.":"Ask your teacher for the class code, then join with it."}</span>
+        <div style="margin-top:20px"><button class="fb" id="homeCreate">${I("add")}${teacher?"Create class":"Join class"}</button></div></div>`}
+   </section></div>`;
   paintBanners();
-  $("#cardLink").onclick=e=>{e.preventDefault();openClass("stream")};
-  $("#cardCw").onclick=()=>openClass("classwork");$("#cardPpl").onclick=()=>openClass("people");
+  const hc=$("#homeCreate");if(hc)hc.onclick=()=>teacher?startCreateClass(hc):openJoinClass(hc);
+  $$("[data-home]").forEach(b=>b.onclick=()=>{UI.homeView=b.dataset.home;renderMain()});
+  $$("[data-open-class]").forEach(b=>b.onclick=e=>{e.preventDefault();openClass(b.dataset.openClass,"stream")});
+  $$("[data-card-tab]").forEach(b=>b.onclick=()=>openClass(b.dataset.cardClass,b.dataset.cardTab));
+}
+function cardHTML(c){
+  return `<li class="ccard"><div class="cban"><canvas class="cvs" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+   <a href="#" data-open-class="${c.id}" style="position:relative">${esc(c.name)}</a><div style="position:relative">${esc(c.section)}</div></div>
+   <span class="cav" aria-hidden="true">${esc((c.role==="owner"?"Y":c.teachers[0]?c.teachers[0].name:"T").trim()[0].toUpperCase())}</span><div class="cbody"></div>
+   <div class="cfoot">${c.role==="owner"?`<button class="ib" aria-label="Open Classwork for ${esc(c.name)}" data-card-tab data-card-class="${c.id}" data-card-tab="classwork">${I("assignment_ind")}</button>
+     <button class="ib" aria-label="Open People for ${esc(c.name)}" data-card-class="${c.id}" data-card-tab="people">${I("group")}</button>`:""}</div></li>`;
 }
 
 /* ---------------- banner art (generic, no Google illustration) ---------------- */
@@ -815,7 +972,7 @@ window.addEventListener("resize",()=>{paintBanners();Guide.place()});
 /* ---------------- Class view with semantic tabs ---------------- */
 const TABS=[["stream","Stream"],["classwork","Classwork"],["people","People"]];
 function renderClass(m){
-  m.innerHTML=`<div class="sheet"><div class="ctabs" role="tablist" aria-label="EDU 101">${TABS.map(([k,l])=>`<button class="ctab" role="tab" id="tab-${k}" data-tab="${k}" aria-selected="${UI.tab===k}" aria-controls="panel" tabindex="${UI.tab===k?0:-1}">${l}</button>`).join("")}</div>
+  m.innerHTML=`<div class="sheet"><div class="ctabs" role="tablist" aria-label="${esc(A.name)}">${TABS.map(([k,l])=>`<button class="ctab" role="tab" id="tab-${k}" data-tab="${k}" aria-selected="${UI.tab===k}" aria-controls="panel" tabindex="${UI.tab===k?0:-1}">${l}</button>`).join("")}</div>
    <div class="col" id="panel" role="tabpanel" aria-labelledby="tab-${UI.tab}"></div></div>`;
   $$(".ctab").forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
   $(".ctabs").addEventListener("keydown",e=>{const i=TABS.findIndex(t=>t[0]===UI.tab);let n=null;if(e.key==="ArrowRight")n=(i+1)%3;if(e.key==="ArrowLeft")n=(i+2)%3;if(e.key==="Home")n=0;if(e.key==="End")n=2;if(n!==null){e.preventDefault();setTab(TABS[n][0]);focusTab()}});
@@ -839,27 +996,27 @@ function renderPanel(){({stream:renderStream,classwork:renderClasswork,people:re
    STREAM
    ====================================================================== */
 function renderStream(p,freshId){
-  p.innerHTML=`<section class="banner" aria-label="Class banner"><canvas class="cvs" aria-hidden="true"></canvas><h1>${esc(S.cls.name)}</h1><div class="secn">${esc(S.cls.section)}</div></section>
+  p.innerHTML=`<section class="banner" aria-label="Class banner"><canvas class="cvs" aria-hidden="true"></canvas><h1>${esc(A.name)}</h1><div class="secn">${esc(A.section)}</div></section>
   <div class="slay">
    <div class="lcol">
     <section class="lcard" aria-labelledby="ccH"><h3 id="ccH">Class code<button class="ib" id="codeMenu" aria-label="Class code options" aria-haspopup="menu" aria-expanded="false">${I("more_vert")}</button></h3>
-      <div class="codebig" id="streamCode">${esc(S.classCode)}</div></section>
+      <div class="codebig" id="streamCode">${esc(A.code)}</div></section>
     <section class="lcard" aria-labelledby="upH"><h3 id="upH">Upcoming</h3><p>No work due soon</p><div class="va"><button class="tb" id="viewAll" style="padding:0 8px">View all</button></div></section>
    </div>
    <div class="feed">
-    <div class="composer">${UI.composerOpen?`
+    ${owner()?`<div class="composer">${UI.composerOpen?`
      <form class="open" id="annForm" aria-label="New announcement">
-      <div class="forrow"><span class="lab">For</span><span class="chipsel" aria-label="For EDU 101">EDU 101${I("arrow_drop_down")}</span><span class="chipsel" aria-label="All students">${I("group")}All students</span></div>
+      <div class="forrow"><span class="lab">For</span><span class="chipsel" aria-label="For ${esc(A.name)}">${esc(A.name)}${I("arrow_drop_down")}</span><span class="chipsel" aria-label="All students">${I("group")}All students</span></div>
       <div class="ta-wrap"><label for="annText">Announce something to your class</label><textarea id="annText" aria-describedby="annHint">${esc(UI.draft)}</textarea></div>
       <div class="crow"><span class="hint" id="annHint">${UI.draft.trim()?"Ready to post.":"Post becomes available when your announcement has text."}</span>
        <button type="button" class="tb" id="annCancel">Cancel</button><button type="submit" class="fb" id="annPost" ${UI.draft.trim()?"":"disabled"}>Post</button></div>
      </form>`:`
      <button class="collapsed" id="annOpen"><span class="avatar" aria-hidden="true" style="width:40px;height:40px">Y</span>Announce something to your class</button>`}
-    </div>
-    ${S.posts.map(post=>postCard(post,post.id===freshId)).join("")}
+    </div>`:`<div class="simnote">${I("info")}<span>You are in this class as a <b>student</b>. Students see the stream but don't post announcements.</span></div>`}
+    ${A.posts.map(post=>postCard(post,post.id===freshId)).join("")}
    </div></div>`;
   paintBanners();
-  $("#viewAll").onclick=()=>snack("No work is due in EDU 101.");
+  $("#viewAll").onclick=()=>snack(`No work is due in ${A.name}.`);
   $("#codeMenu").onclick=e=>{e.stopPropagation();openMenu($("#codeMenu"),[{icon:"content_copy",label:"Copy class code",fn:()=>snack("Class code copied (simulated).")},{icon:"autorenew",label:"Regenerate class code",fn:()=>regenerate($("#codeMenu"))}])};
   const ao=$("#annOpen");if(ao)ao.onclick=()=>{UI.composerOpen=true;renderStream(p);$("#annText").focus();emit("composer:open")};
   const f=$("#annForm");
@@ -867,7 +1024,7 @@ function renderStream(p,freshId){
     ta.oninput=()=>{UI.draft=ta.value;const ok=!!ta.value.trim();$("#annPost").disabled=!ok;$("#annHint").textContent=ok?"Ready to post.":"Post becomes available when your announcement has text.";if(ok)emit("composer:text")};
     $("#annCancel").onclick=()=>{UI.composerOpen=false;UI.draft="";renderStream(p);$("#annOpen").focus();emit("composer:cancel")};
     f.onsubmit=e=>{e.preventDefault();const t=ta.value.trim();if(!t)return;const id=nid("post-");
-      S.posts.unshift({id,author:"You",when:"Just now",edited:false,protected:false,text:t});L.postsCreated++;UI.draft="";UI.composerOpen=false;
+      A.posts.unshift({id,author:"You",when:"Just now",edited:false,protected:false,text:t});L.postsCreated++;UI.draft="";UI.composerOpen=false;
       renderStream(p,id);$("#annOpen").focus();snack("Posted to Stream.");emit("post:created")};
   }
   // inline post editing
@@ -875,10 +1032,10 @@ function renderStream(p,freshId){
   if(ef){const ta=$("#editText");ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);
     ta.oninput=()=>{UI.editDraft=ta.value;$("#editSave").disabled=!ta.value.trim()};
     $("#editCancel").onclick=()=>{const id=UI.editingPost;UI.editingPost=null;renderStream(p);const b=document.querySelector(`[data-post-menu="${id}"]`);b&&b.focus()};
-    ef.onsubmit=e=>{e.preventDefault();const t=ta.value.trim();if(!t)return;const post=S.posts.find(x=>x.id===UI.editingPost);post.text=t;post.edited=true;L.postsEdited++;const id=post.id;UI.editingPost=null;renderStream(p);const b=document.querySelector(`[data-post-menu="${id}"]`);b&&b.focus();snack("Post updated.");emit("post:edited")};
+    ef.onsubmit=e=>{e.preventDefault();const t=ta.value.trim();if(!t)return;const post=A.posts.find(x=>x.id===UI.editingPost);post.text=t;post.edited=true;L.postsEdited++;const id=post.id;UI.editingPost=null;renderStream(p);const b=document.querySelector(`[data-post-menu="${id}"]`);b&&b.focus();snack("Post updated.");emit("post:edited")};
   }
-  $$("[data-post-menu]").forEach(b=>b.onclick=e=>{e.stopPropagation();const post=S.posts.find(x=>x.id===b.dataset.postMenu);
-    const items=post.protected?[{icon:"content_copy",label:"Copy link",fn:()=>snack("Link copied (simulated).")}]
+  $$("[data-post-menu]").forEach(b=>b.onclick=e=>{e.stopPropagation();const post=A.posts.find(x=>x.id===b.dataset.postMenu);
+    const items=(post.protected||!owner())?[{icon:"content_copy",label:"Copy link",fn:()=>snack("Link copied (simulated).")}]
       :[{icon:"edit",label:"Edit",id:"mEditPost",fn:()=>{UI.editingPost=post.id;UI.editDraft=post.text;renderStream(p)}},{icon:"delete",label:"Delete",id:"mDeletePost",fn:()=>removePost(post,p)},"-",{icon:"content_copy",label:"Copy link",fn:()=>snack("Link copied (simulated).")}];
     openMenu(b,items);emit("postmenu:open")});
 }
@@ -893,26 +1050,26 @@ function postCard(post,fresh){
     :`<div class="post-b">${esc(post.text)}</div>`}
   </article>`;
 }
-function removePost(post,p){S.posts=S.posts.filter(x=>x!==post);L.postsRemoved++;if(UI.editingPost===post.id)UI.editingPost=null;renderStream(p);($("#annOpen")||$("#annText")).focus();snack("Post deleted.");emit("post:removed")}
+function removePost(post,p){A.posts=A.posts.filter(x=>x!==post);L.postsRemoved++;if(UI.editingPost===post.id)UI.editingPost=null;renderStream(p);($("#annOpen")||$("#annText")).focus();snack("Post deleted.");emit("post:removed")}
 
 /* ======================================================================
    CLASSWORK
    ====================================================================== */
 function renderClasswork(p){
-  const unf=unfiled(),any=S.topics.length||S.assignments.length;
-  p.innerHTML=`<div class="cwbar"><button class="create" id="createBtn" aria-haspopup="menu" aria-expanded="false">${I("add")}Create</button></div>
+  const unf=unfiled(),any=A.topics.length||A.assignments.length;
+  p.innerHTML=`${owner()?`<div class="cwbar"><button class="create" id="createBtn" aria-haspopup="menu" aria-expanded="false">${I("add")}Create</button></div>`:""}
    ${UI.nudgeVisible?`<div class="nudge" id="nudge" role="status">${I("lightbulb")}<p><b>Getting crowded?</b> Items filed under a topic are much easier for students to find than a long unfiled list.</p><button id="nudgeOk">Dismiss</button></div>`:""}
    ${!any?`<div class="cw-empty">${EMPTY_CW}<b>This is where you'll assign work</b><span>You can add assignments and other work for the class, then organise it into topics</span></div>`:""}
    ${unf.length?`<section class="topic" aria-labelledby="h-nt"><div class="thead nt"><h2 id="h-nt">No topic</h2><span class="tcount">${plural(unf.length,"item")}</span></div>${unf.map(rowHTML).join("")}</section>`:""}
-   ${S.topics.map(t=>{const its=inTopic(t.id);return `<section class="topic" aria-labelledby="h-${t.id}" data-topic="${t.id}"><div class="thead"><h2 id="h-${t.id}">${esc(t.name)}</h2><span class="tcount">${plural(its.length,"item")}</span>
+   ${A.topics.map(t=>{const its=inTopic(t.id);return `<section class="topic" aria-labelledby="h-${t.id}" data-topic="${t.id}"><div class="thead"><h2 id="h-${t.id}">${esc(t.name)}</h2><span class="tcount">${plural(its.length,"item")}</span>
      <button class="ib" data-topic-menu="${t.id}" aria-haspopup="menu" aria-expanded="false" aria-label="Topic options for ${esc(t.name)}">${I("more_vert")}</button></div>
      ${its.length?its.map(rowHTML).join(""):`<div class="empty-t">No work in this topic yet</div>`}</section>`}).join("")}`;
-  $("#createBtn").onclick=e=>{e.stopPropagation();openMenu($("#createBtn"),[{icon:"assignment",label:"Assignment",id:"mAssignment",fn:()=>openAssignmentEditor(null,$("#createBtn"))},"-",{icon:"topic",label:"Topic",id:"mTopic",fn:()=>openTopicDialog(null,$("#createBtn"))}]);emit("create:open")};
+  const cb=$("#createBtn");if(cb)cb.onclick=e=>{e.stopPropagation();openMenu($("#createBtn"),[{icon:"assignment",label:"Assignment",id:"mAssignment",fn:()=>openAssignmentEditor(null,$("#createBtn"))},"-",{icon:"topic",label:"Topic",id:"mTopic",fn:()=>openTopicDialog(null,$("#createBtn"))}]);emit("create:open")};
   const nb=$("#nudgeOk");if(nb)nb.onclick=()=>{UI.nudgeVisible=false;renderClasswork(p);$("#createBtn").focus()};
-  $$("[data-topic-menu]").forEach(b=>b.onclick=e=>{e.stopPropagation();const t=S.topics.find(x=>x.id===b.dataset.topicMenu);
+  $$("[data-topic-menu]").forEach(b=>b.onclick=e=>{e.stopPropagation();const t=A.topics.find(x=>x.id===b.dataset.topicMenu);
     openMenu(b,[{icon:"edit",label:"Rename",fn:()=>openTopicDialog(t,b)},{icon:"delete",label:"Delete",fn:()=>confirmDeleteTopic(t,b)}],{alignRight:true})});
-  $$("[data-item-menu]").forEach(b=>b.onclick=e=>{e.stopPropagation();const a=S.assignments.find(x=>x.id===b.dataset.itemMenu);
-    openMenu(b,[{icon:"edit",label:"Edit",fn:()=>openAssignmentEditor(a,b)},{icon:"drive_file_move",label:"Move to topic",id:"mMove",fn:()=>openMoveDialog(a,b)},{icon:"delete",label:"Delete",fn:()=>{S.assignments=S.assignments.filter(x=>x!==a);L.assignmentsRemoved++;renderClasswork(p);$("#createBtn").focus();snack(`Assignment “${excerpt(a.title,30)}” deleted.`);emit("assign:removed")}}],{alignRight:true});emit("itemmenu:open")});
+  $$("[data-item-menu]").forEach(b=>b.onclick=e=>{e.stopPropagation();const a=A.assignments.find(x=>x.id===b.dataset.itemMenu);
+    openMenu(b,[{icon:"edit",label:"Edit",fn:()=>openAssignmentEditor(a,b)},{icon:"drive_file_move",label:"Move to topic",id:"mMove",fn:()=>openMoveDialog(a,b)},{icon:"delete",label:"Delete",fn:()=>{A.assignments=A.assignments.filter(x=>x!==a);L.assignmentsRemoved++;renderClasswork(p);$("#createBtn").focus();snack(`Assignment “${excerpt(a.title,30)}” deleted.`);emit("assign:removed")}}],{alignRight:true});emit("itemmenu:open")});
 }
 function rowHTML(a){return `<div class="row" data-item="${a.id}"><span class="icon" aria-hidden="true">${I("assignment")}</span><span class="t">${esc(a.title)}</span><span class="d">${a.edited?"Edited":"Posted"} just now</span>
   <button class="ib" data-item-menu="${a.id}" aria-haspopup="menu" aria-expanded="false" aria-label="Options for assignment ${esc(excerpt(a.title))}">${I("more_vert")}</button></div>`}
@@ -930,16 +1087,16 @@ function openTopicDialog(topic,trigger){
     i.oninput=()=>{b.disabled=!i.value.trim();if(i.value.trim())emit("topic:text")};
     d.querySelector("#tForm").onsubmit=e=>{e.preventDefault();const n=i.value.trim();if(!n)return;
       if(topic){topic.name=n;L.topicsRenamed++;close();renderPanel();snack(`Topic renamed to “${excerpt(n,30)}”.`);$("#createBtn").focus();return}
-      const t={id:nid("topic-"),name:n};S.topics.unshift(t);L.topicsCreated++;close();renderPanel();$("#createBtn").focus();snack(`Topic “${excerpt(n,30)}” created.`);emit("topic:created")}},trigger,()=>emit("topic:cancel"));
+      const t={id:nid("topic-"),name:n};A.topics.unshift(t);L.topicsCreated++;close();renderPanel();$("#createBtn").focus();snack(`Topic “${excerpt(n,30)}” created.`);emit("topic:created")}},trigger,()=>emit("topic:cancel"));
   emit("topic:dialog");
 }
 function confirmDeleteTopic(t,trigger){const n=inTopic(t.id).length;
   cDialog(`<h2 id="cdT">Delete topic?</h2><p>“${esc(t.name)}” will be deleted.${n?` Its ${plural(n,"item")} won't be deleted. They'll move to No topic.`:""}</p>
    <div class="acts"><button class="tb" data-close>Cancel</button><button class="tb" id="delTopic">Delete</button></div>`,
-  (d,close)=>{d.querySelector("#delTopic").onclick=()=>{S.assignments.forEach(a=>{if(a.topicId===t.id)a.topicId=null});S.topics=S.topics.filter(x=>x!==t);L.topicsRemoved++;
+  (d,close)=>{d.querySelector("#delTopic").onclick=()=>{A.assignments.forEach(a=>{if(a.topicId===t.id)a.topicId=null});A.topics=A.topics.filter(x=>x!==t);L.topicsRemoved++;
     const nud=maybeNudge();close(true);renderPanel();$("#createBtn").focus();snack(`Topic deleted.${n?` ${plural(n,"item")} moved to No topic.`:""}`);if(nud)announceNudge()}},trigger)}
 function announceNudge(){setTimeout(()=>announce("Getting crowded? Items filed under a topic are much easier for students to find than a long unfiled list."),1400)}
-function topicOptions(sel){return `<option value="">No topic</option>${S.topics.map(t=>`<option value="${t.id}" ${sel===t.id?"selected":""}>${esc(t.name)}</option>`).join("")}`}
+function topicOptions(sel){return `<option value="">No topic</option>${A.topics.map(t=>`<option value="${t.id}" ${sel===t.id?"selected":""}>${esc(t.name)}</option>`).join("")}`}
 function openMoveDialog(a,trigger){
   cDialog(`<h2 id="cdT">Move to topic</h2><div class="simnote">${I("info")}<span><b>Practice shortcut.</b> In Classroom you change an assignment's topic by editing it. Both routes work here.</span></div>
    <p style="overflow-wrap:anywhere">${esc(a.title)}</p>
@@ -948,7 +1105,7 @@ function openMoveDialog(a,trigger){
   (d,close)=>{d.querySelector("#mvForm").onsubmit=e=>{e.preventDefault();const v=d.querySelector("#moveTopic").value||null;
     if(v===a.topicId){close();return}
     a.topicId=v;L.assignmentsMoved++;const nud=maybeNudge();close(true);renderPanel();$("#createBtn").focus();
-    snack(v?`Moved to “${excerpt(S.topics.find(t=>t.id===v).name,30)}”.`:"Moved to No topic.");if(nud)announceNudge();emit("assign:moved")}},trigger);
+    snack(v?`Moved to “${excerpt(A.topics.find(t=>t.id===v).name,30)}”.`:"Moved to No topic.");if(nud)announceNudge();emit("assign:moved")}},trigger);
   emit("move:dialog")}
 
 /* Assignment editor (full-screen, mirrors Classroom's editor; provisional fidelity) */
@@ -964,12 +1121,12 @@ function openAssignmentEditor(a,trigger){
      <div class="filled"><label for="aInstr">Instructions (optional)</label><textarea id="aInstr">${a?esc(a.instructions||""):""}</textarea></div>
    </div></div>
    <aside class="ed-side" aria-label="Assignment details">
-     <div class="st"><div class="k">For</div><div class="v">EDU 101${I("arrow_drop_down")}</div></div>
+     <div class="st"><div class="k">For</div><div class="v">${esc(A.name)}${I("arrow_drop_down")}</div></div>
      <div class="st"><div class="k">Assign to</div><div class="v">All students${I("arrow_drop_down")}</div></div>
      <div class="st"><div class="k">Points</div><div class="v">100${I("arrow_drop_down")}</div></div>
      <div class="st"><div class="k">Due</div><div class="v">No due date${I("arrow_drop_down")}</div></div>
      <div><div class="st"><div class="k" id="aTopicK">Topic</div></div><div class="field of" style="margin:0"><select id="aTopic" aria-labelledby="aTopicK">${topicOptions(a?a.topicId:null)}</select>${I("arrow_drop_down","dd")}</div>
-      ${S.topics.length?"":`<div class="help" style="margin-left:0;margin-top:8px">No topics yet. Create one from Create › Topic.</div>`}</div>
+      ${A.topics.length?"":`<div class="help" style="margin-left:0;margin-top:8px">No topics yet. Create one from Create › Topic.</div>`}</div>
    </aside></div></form>`;
   document.body.appendChild(ed);
   const ti=ed.querySelector("#aTitle"),as=ed.querySelector("#aAssign"),sel=ed.querySelector("#aTopic");
@@ -985,12 +1142,12 @@ function openAssignmentEditor(a,trigger){
     /* One commit is one logged action: an edit that also changes the topic counts as an edit only,
        so the summary's "moved or edited" total never double-counts it. */
     if(a){a.title=title;a.instructions=instructions;a.topicId=topicId;a.edited=true;L.assignmentsEdited++}
-    else{S.assignments.unshift({id:nid("asg-"),title,instructions,topicId,edited:false});L.assignmentsCreated++;topicId?L.createdFiled++:L.createdUnfiled++}
+    else{A.assignments.unshift({id:nid("asg-"),title,instructions,topicId,edited:false});L.assignmentsCreated++;topicId?L.createdFiled++:L.createdUnfiled++}
     const nud=maybeNudge();
     ed.remove();document.removeEventListener("keydown",esck,true);
     if(UI.view!=="class"||UI.tab!=="classwork"){UI.view="class";UI.tab="classwork"}
     renderPanel();$("#createBtn").focus();
-    const tn=topicId?S.topics.find(t=>t.id===topicId).name:null;
+    const tn=topicId?A.topics.find(t=>t.id===topicId).name:null;
     snack(a?"Assignment updated.":tn?`Assignment filed under “${excerpt(tn,30)}”.`:"Assignment added to No topic.");
     if(nud)announceNudge();emit(a?"assign:edited":"assign:created")};
   emit("assign:editor");
@@ -1002,32 +1159,32 @@ function openAssignmentEditor(a,trigger){
 const LA=["#1E8E3E","#8E24AA","#E8710A","#1967D2","#D01884","#12848F","#5F6368"];
 const laColor=n=>{let h=0;for(const c of n)h=(h*31+c.charCodeAt(0))%997;return LA[h%LA.length]};
 function renderPeople(p){
-  const n=S.students.length;
-  p.innerHTML=`<section aria-labelledby="tH"><div class="ph"><h2 id="tH">Teachers</h2><button class="ib" id="inviteBtn" aria-label="Invite teachers" style="color:var(--pri)">${I("person_add")}</button></div>
-   ${S.teachers.map(t=>t.status==="owner"?`<div class="prow"><span class="la" style="background:#5C6BC0" aria-hidden="true">Y</span><div class="n">You<small>Class owner · can't be removed</small></div><span class="badge b-owner">${I("key")}Owner</span><span style="width:44px" aria-hidden="true"></span></div>`
+  const n=A.students.length;
+  p.innerHTML=`<section aria-labelledby="tH"><div class="ph"><h2 id="tH">Teachers</h2>${owner()?`<button class="ib" id="inviteBtn" aria-label="Invite teachers" style="color:var(--pri)">${I("person_add")}</button>`:""}</div>
+   ${A.teachers.map(t=>t.status==="owner"?`<div class="prow"><span class="la" style="background:#5C6BC0" aria-hidden="true">Y</span><div class="n">You<small>Class owner · can't be removed</small></div><span class="badge b-owner">${I("key")}Owner</span><span style="width:44px" aria-hidden="true"></span></div>`
      :`<div class="prow"><span class="la" style="background:#9AA0A6" aria-hidden="true">${esc(t.email[0].toUpperCase())}</span><div class="n">${esc(t.email)}<small>Co-teacher · invitation not accepted yet</small></div><span class="badge b-pending">${I("schedule")}Pending</span>
        <button class="ib" data-teacher-menu="${t.id}" aria-haspopup="menu" aria-expanded="false" aria-label="Options for ${esc(t.email)}">${I("more_vert")}</button></div>`).join("")}
   </section>
-  <section aria-labelledby="sH" style="margin-top:24px"><div class="ph"><h2 id="sH">Students</h2><span class="count" id="headcount" aria-live="off">${plural(n,"student")}</span><button class="ib" id="addStudentBtn" aria-label="Add practice student" style="color:var(--pri)">${I("person_add")}</button></div>
-   ${n?S.students.map(s=>`<div class="prow"><span class="la" style="background:${laColor(s.name)}" aria-hidden="true">${esc(s.name.trim()[0].toUpperCase())}</span><div class="n">${esc(s.name)}<small>${s.placeholder?"Fictional placeholder student":"Fictional student added by you"}</small></div><span class="badge b-active">${I("check")}Active</span>
-     <button class="ib" data-student-menu="${s.id}" aria-haspopup="menu" aria-expanded="false" aria-label="Options for ${esc(s.name)}">${I("more_vert")}</button></div>`).join("")
+  <section aria-labelledby="sH" style="margin-top:24px"><div class="ph"><h2 id="sH">Students</h2><span class="count" id="headcount" aria-live="off">${plural(n,"student")}</span>${owner()?`<button class="ib" id="addStudentBtn" aria-label="Add practice student" style="color:var(--pri)">${I("person_add")}</button>`:""}</div>
+   ${n?A.students.map(s=>`<div class="prow"><span class="la" style="background:${laColor(s.name)}" aria-hidden="true">${esc(s.name.trim()[0].toUpperCase())}</span><div class="n">${esc(s.name)}<small>${s.placeholder?"Fictional placeholder student":"Fictional student added by you"}</small></div><span class="badge b-active">${I("check")}Active</span>
+     ${owner()?`<button class="ib" data-student-menu="${s.id}" aria-haspopup="menu" aria-expanded="false" aria-label="Options for ${esc(s.name)}">${I("more_vert")}</button>`:""}</div>`).join("")
      :`<div class="empty-t">No students yet. Add a practice student to see the roster change.</div>`}
   </section>
-  <section class="codecard" aria-labelledby="pcH"><span class="lbl" id="pcH">Class code</span><span class="codebig" id="peopleCode">${esc(S.classCode)}</span>
-   <span class="simtag">${I("science")}Practice shortcut</span><button class="ob" id="regenBtn">${I("autorenew")}Regenerate code</button></section>`;
-  $("#inviteBtn").onclick=()=>openInvite($("#inviteBtn"));
-  $("#addStudentBtn").onclick=()=>openAddStudent($("#addStudentBtn"));
-  $("#regenBtn").onclick=()=>regenerate($("#regenBtn"));
-  $$("[data-teacher-menu]").forEach(b=>b.onclick=e=>{e.stopPropagation();const t=S.teachers.find(x=>x.id===b.dataset.teacherMenu);
-    openMenu(b,[{icon:"close",label:"Cancel invitation",fn:()=>{S.teachers=S.teachers.filter(x=>x!==t);L.invitesCancelled++;renderPeople(p);$("#inviteBtn").focus();snack(`Invitation for ${t.email} cancelled.`)}}],{alignRight:true})});
-  $$("[data-student-menu]").forEach(b=>b.onclick=e=>{e.stopPropagation();const s=S.students.find(x=>x.id===b.dataset.studentMenu);
-    openMenu(b,[{icon:"person_remove",label:"Remove",fn:()=>{S.students=S.students.filter(x=>x!==s);L.studentsRemoved++;renderPeople(p);$("#addStudentBtn").focus();snack(`Removed ${s.name}. ${plural(S.students.length,"student")} in EDU 101.`);emit("student:removed")}}],{alignRight:true})});
+  <section class="codecard" aria-labelledby="pcH"><span class="lbl" id="pcH">Class code</span><span class="codebig" id="peopleCode">${esc(A.code)}</span>
+   ${owner()?`<span class="simtag">${I("science")}Practice shortcut</span><button class="ob" id="regenBtn">${I("autorenew")}Regenerate code</button>`:""}</section>`;
+  const ib=$("#inviteBtn");if(ib)ib.onclick=()=>openInvite(ib);
+  const ab=$("#addStudentBtn");if(ab)ab.onclick=()=>openAddStudent(ab);
+  const rb=$("#regenBtn");if(rb)rb.onclick=()=>regenerate(rb);
+  $$("[data-teacher-menu]").forEach(b=>b.onclick=e=>{e.stopPropagation();const t=A.teachers.find(x=>x.id===b.dataset.teacherMenu);
+    openMenu(b,[{icon:"close",label:"Cancel invitation",fn:()=>{A.teachers=A.teachers.filter(x=>x!==t);L.invitesCancelled++;renderPeople(p);$("#inviteBtn").focus();snack(`Invitation for ${t.email} cancelled.`)}}],{alignRight:true})});
+  if(owner())$$("[data-student-menu]").forEach(b=>b.onclick=e=>{e.stopPropagation();const s=A.students.find(x=>x.id===b.dataset.studentMenu);
+    openMenu(b,[{icon:"person_remove",label:"Remove",fn:()=>{A.students=A.students.filter(x=>x!==s);L.studentsRemoved++;renderPeople(p);$("#addStudentBtn").focus();snack(`Removed ${s.name}. ${plural(A.students.length,"student")} in ${A.name}.`);emit("student:removed")}}],{alignRight:true})});
 }
 function regenerate(trigger){
-  const prev=S.classCode;S.classCode=genCode(prev);L.codeRegenerations++;
+  const prev=A.code;A.code=genCode(prev);L.codeRegenerations++;
   if(UI.view==="class")renderPanel();
   const again=$("#regenBtn")||$("#codeMenu")||trigger;again&&again.focus();
-  snack(`New class code generated: ${S.classCode}.`);announce(`New class code generated: ${spellCode(S.classCode)}.`);emit("code:regenerated")}
+  snack(`New class code generated: ${A.code}.`);announce(`New class code generated: ${spellCode(A.code)}.`);emit("code:regenerated")}
 const EMAIL=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 function openInvite(trigger){
   cDialog(`<h2 id="cdT">Invite teachers</h2><div class="simnote">${I("science")}<span><b>Simulated invitation.</b> No email is sent. The co-teacher stays Pending because nobody can accept it here.</span></div>
@@ -1041,8 +1198,8 @@ function openInvite(trigger){
     d.querySelector("#invForm").onsubmit=e=>{e.preventDefault();const v=i.value.trim();
       if(!v)return;
       if(!EMAIL.test(v)){setErr("Enter a valid email address, such as tutor@example.com.");i.focus();return}
-      if(S.teachers.some(t=>t.email&&t.email.toLowerCase()===v.toLowerCase())){setErr("This person has already been invited.");i.focus();return}
-      S.teachers.push({id:nid("t-"),email:v,status:"pending"});L.invitesSent++;close(true);renderPanel();$("#inviteBtn").focus();snack(`Invite sent to ${v}.`);emit("invite:sent")}},trigger);
+      if(A.teachers.some(t=>t.email&&t.email.toLowerCase()===v.toLowerCase())){setErr("This person has already been invited.");i.focus();return}
+      A.teachers.push({id:nid("t-"),email:v,status:"pending"});L.invitesSent++;close(true);renderPanel();$("#inviteBtn").focus();snack(`Invite sent to ${v}.`);emit("invite:sent")}},trigger);
   emit("invite:dialog")}
 function openAddStudent(trigger){
   cDialog(`<h2 id="cdT">Add practice student</h2><div class="simnote">${I("science")}<span><b>Simplified for practice.</b> In Classroom, students join through an invitation, an invite link or the class code. Here they are added directly and show as Active.</span></div>
@@ -1052,7 +1209,7 @@ function openAddStudent(trigger){
   (d,close)=>{const i=d.querySelector("#stuName"),b=d.querySelector("#stuSubmit");
     i.oninput=()=>{b.disabled=!i.value.trim();if(i.value.trim())emit("student:text")};
     d.querySelector("#stuForm").onsubmit=e=>{e.preventDefault();const v=i.value.trim();if(!v)return;
-      S.students.push({id:nid("u"),name:v,placeholder:false});L.studentsAdded++;close(true);renderPanel();$("#addStudentBtn").focus();snack(`${v} added to EDU 101 as Active. ${plural(S.students.length,"student")}.`);emit("student:added")}},trigger);
+      A.students.push({id:nid("u"),name:v,placeholder:false});L.studentsAdded++;close(true);renderPanel();$("#addStudentBtn").focus();snack(`${v} added to ${A.name} as Active. ${plural(A.students.length,"student")}.`);emit("student:added")}},trigger);
   emit("student:dialog")}
 
 /* ======================================================================
@@ -1217,11 +1374,11 @@ const GUIDES={
       {t:"#annOpen",x:"Select “Announce something to your class”.",until:"composer:open"},
       {t:"#annText",x:"Type a short message. Post stays unavailable until there's text.",until:"composer:text"},
       {t:"#annPost",x:"Select Post. Your announcement appears at the top of the Stream.",until:"post:created"}]},
-    {key:"edit",title:"Edit your own post",needs:()=>S.posts.some(p=>!p.protected),needMsg:"Post an announcement first, then come back to edit it.",steps:[
+    {key:"edit",title:"Edit your own post",needs:()=>A.posts.some(p=>!p.protected),needMsg:"Post an announcement first, then come back to edit it.",steps:[
       {t:()=>firstOwnPostMenu(),x:"Open the options (⋮) on one of your posts.",until:"postmenu:open"},
       {t:"#mEditPost",x:"Choose Edit.",until:null,nextOn:"#editText"},
       {t:"#editSave",x:"Change the text, then select Save.",until:"post:edited"}]},
-    {key:"remove",title:"Delete your own post",needs:()=>S.posts.some(p=>!p.protected),needMsg:"Post an announcement first. The protected welcome post can't be deleted.",steps:[
+    {key:"remove",title:"Delete your own post",needs:()=>A.posts.some(p=>!p.protected),needMsg:"Post an announcement first. The protected welcome post can't be deleted.",steps:[
       {t:()=>firstOwnPostMenu(),x:"Open the options (⋮) on one of your posts.",until:"postmenu:open"},
       {t:"#mDeletePost",x:"Choose Delete. You can post again at any time.",until:"post:removed"}]}
   ],
@@ -1235,9 +1392,9 @@ const GUIDES={
       {t:"#createBtn",x:"Select Create.",until:"create:open"},
       {t:"#mAssignment",x:"Choose Assignment.",until:"assign:editor"},
       {t:"#aTitle",x:"Give the assignment a title.",until:"assign:title"},
-      {t:"#aTopic",x:()=>S.topics.length?"Choose a topic to file it under.":"Choose a topic. With no topics yet, it will go to No topic.",until:"assign:topic",skipIf:()=>!S.topics.length},
+      {t:"#aTopic",x:()=>A.topics.length?"Choose a topic to file it under.":"Choose a topic. With no topics yet, it will go to No topic.",until:"assign:topic",skipIf:()=>!A.topics.length},
       {t:"#aAssign",x:"Select Assign.",until:"assign:created"}]},
-    {key:"move",title:"Move an assignment to a topic",needs:()=>S.assignments.length&&S.topics.length,needMsg:"Create at least one topic and one assignment first.",steps:[
+    {key:"move",title:"Move an assignment to a topic",needs:()=>A.assignments.length&&A.topics.length,needMsg:"Create at least one topic and one assignment first.",steps:[
       {t:()=>document.querySelector("[data-item-menu]"),x:"Open the options (⋮) on an assignment.",until:"itemmenu:open"},
       {t:"#mMove",x:"Choose Move to topic.",until:"move:dialog"},
       {t:"#moveTopic",x:"Pick a topic, then select Move.",until:"assign:moved"}]}
@@ -1251,17 +1408,17 @@ const GUIDES={
       {t:"#addStudentBtn",x:"Select Add practice student.",until:"student:dialog"},
       {t:"#stuName",x:"Type a fictional name.",until:"student:text"},
       {t:"#stuSubmit",x:"Select Add. The student appears as Active and the count updates.",until:"student:added"}]},
-    {key:"remove",title:"Remove a student",needs:()=>S.students.length>0,needMsg:"Add a practice student first.",steps:[
+    {key:"remove",title:"Remove a student",needs:()=>A.students.length>0,needMsg:"Add a practice student first.",steps:[
       {t:()=>document.querySelector("[data-student-menu]"),x:"Open the options (⋮) next to a student.",until:null,nextOn:".menu"},
       {t:".menu [role=menuitem]",x:"Choose Remove.",until:"student:removed"}]},
     {key:"code",title:"Regenerate the class code",steps:[
       {t:"#regenBtn",x:"Select Regenerate code. The old code stops working.",until:"code:regenerated"}]}
   ]
 };
-function firstOwnPostMenu(){const p=S.posts.find(x=>!x.protected);return p?document.querySelector(`[data-post-menu="${p.id}"]`):null}
+function firstOwnPostMenu(){const p=A.posts.find(x=>!x.protected);return p?document.querySelector(`[data-post-menu="${p.id}"]`):null}
 
 const Guide={g:null,i:0,raf:0,doneT:0,
-  start(g){this.exit(true);if(UI.view!=="class")openClass(UI.tab);
+  start(g){this.exit(true);if(UI.view!=="class"&&A)openClass(A.id,UI.tab);
     if(g.needs&&!g.needs()){snack(g.needMsg);return}
     this.g=g;this.i=0;this.skip();$("#spot").hidden=false;$("#coach").hidden=false;this.draw();this.loop();announce(`Guidance started: ${g.title}. ${this.text()}`)},
   text(){const s=this.g.steps[this.i];return typeof s.x==="function"?s.x():s.x},
@@ -1293,6 +1450,10 @@ const Guide={g:null,i:0,raf:0,doneT:0,
 };
 
 function openHelp(trigger,start){
+  if(!A){simDialog(`<div class="hd"><div><span class="eb">Practice Help</span><h2 id="sdT">Set your class up first</h2></div></div>
+    <div class="bd"><p>The guides walk through Stream, Classwork and People, so they need a class. Use <b>+</b> in the top bar to create one (or join one as a student), then open Practice Help again.</p>
+    <div style="display:flex;gap:10px;justify-content:flex-end"><button class="simbtn ghost" data-close>Close</button><button class="simbtn" id="hMake">${I("add")}Create a class</button></div></div>`,
+    (d,close)=>{d.querySelector("#hMake").onclick=()=>{close(true);const b=$("#plusBtn");S.user.role==="student"?openJoinClass(b):startCreateClass(b)}},trigger);return}
   const tab=UI.view==="class"?UI.tab:"stream";const tabName=TABS.find(t=>t[0]===tab)[1];
   let dlgRef;
   const view=(which)=>{
@@ -1391,30 +1552,33 @@ $("#dWatch").onclick=e=>openPlayer(e.currentTarget);
    RESET / END PRACTICE / SUMMARY / FINISH
    ====================================================================== */
 function resetSandbox(){Guide.exit(true);closeMenus();$$(".scrim,.simscrim,.editor").forEach(x=>x.remove());
-  seed();showScreen("shell");openClass("stream");renderDrawer();renderTop();
-  $("#main").scrollTop=0;focusTab();snack(`Sandbox reset. New class code: ${S.classCode}.`)}
+  seed();showRolePicker();snack("Sandbox reset. Choose a role and set your class up again.")}
 $("#dReset").onclick=resetSandbox;
 $("#dEnd").onclick=openSummary;
 
 const LEVELS=["Needs more practice","Developing","Confident"];
 function openSummary(){
   Guide.exit(true);closeMenus();$$(".scrim,.simscrim,.editor").forEach(x=>x.remove());
-  const unf=unfiled().length,filed=S.assignments.length-unf,pend=pendingTeachers().length;
+  const K=A||S.classes[0]||null;   /* the class to report on, if the learner made one */
+  const unf=K?K.assignments.filter(a=>!a.topicId).length:0,filed=K?K.assignments.length-unf:0;
+  const pend=K?K.teachers.filter(t=>t.status==="pending").length:0;
   const most=Object.entries(L.tabOpens).sort((a,b)=>b[1]-a[1])[0];
   const el=$("#summary");
   el.innerHTML=`<div class="sum">
-   <div class="sum-top"><div><div class="eb">EDU 101 · Practice Summary</div><h1 id="sumTitle" tabindex="-1">What you practised</h1></div><span class="notscore">${I("block")}Not a score</span></div>
+   <div class="sum-top"><div><div class="eb">${K?esc(K.name)+" · ":""}Practice Summary</div><h1 id="sumTitle" tabindex="-1">What you practised</h1></div><span class="notscore">${I("block")}Not a score</span></div>
    <div class="two">
-    <section class="pan" aria-labelledby="csH"><h2 id="csH">${I("domain")}Your class right now</h2><p class="sub">Current contents of the EDU 101 sandbox.</p>
-     <dl class="kv">
-      <dt class="grp">Stream</dt><dt>Posts remaining</dt><dd>${S.posts.length}</dd>
-      <dt class="grp">Classwork</dt><dt>Topics</dt><dd>${S.topics.length}</dd><dt>Assignments</dt><dd>${S.assignments.length}</dd><dt>Filed under a topic</dt><dd>${filed}</dd><dt>No topic (unfiled)</dt><dd>${unf}</dd>
-      <dt class="grp">People</dt><dt>Teachers</dt><dd>1 owner${pend?`, ${pend} pending`:""}</dd><dt>Active students</dt><dd>${S.students.length}</dd><dt>Class code</dt><dd style="letter-spacing:.06em">${esc(S.classCode)}</dd>
-     </dl>
-     ${S.topics.length||unf?`<ul class="tree" aria-label="Classwork structure">${unf?`<li>No topic (${unf})</li>`:""}${S.topics.map(t=>{const a=inTopic(t.id);return `<li>${esc(t.name)} (${a.length})${a.length?`<ul>${a.map(x=>`<li>${esc(x.title)}</li>`).join("")}</ul>`:""}</li>`}).join("")}</ul>`:""}
+    <section class="pan" aria-labelledby="csH"><h2 id="csH">${I("domain")}Your class right now</h2><p class="sub">${K?`Current contents of ${esc(K.name)}.`:"You haven't created a class yet."}</p>
+     ${K?`<dl class="kv">
+      <dt class="grp">Class</dt><dt>Name</dt><dd>${esc(K.name)}</dd>${K.section?`<dt>Section</dt><dd>${esc(K.section)}</dd>`:""}<dt>Your role</dt><dd>${K.role==="owner"?"Teacher (owner)":"Student"}</dd>
+      <dt class="grp">Stream</dt><dt>Posts remaining</dt><dd>${K.posts.length}</dd>
+      <dt class="grp">Classwork</dt><dt>Topics</dt><dd>${K.topics.length}</dd><dt>Assignments</dt><dd>${K.assignments.length}</dd><dt>Filed under a topic</dt><dd>${filed}</dd><dt>No topic (unfiled)</dt><dd>${unf}</dd>
+      <dt class="grp">People</dt><dt>Teachers</dt><dd>${K.teachers.filter(t=>t.status==="owner").length} owner${pend?`, ${pend} pending`:""}</dd><dt>Students</dt><dd>${K.students.length}</dd><dt>Class code</dt><dd style="letter-spacing:.06em">${esc(K.code)}</dd>
+     </dl>`:""}
+     ${K&&(K.topics.length||unf)?`<ul class="tree" aria-label="Classwork structure">${unf?`<li>No topic (${unf})</li>`:""}${K.topics.map(t=>{const a=K.assignments.filter(x=>x.topicId===t.id);return `<li>${esc(t.name)} (${a.length})${a.length?`<ul>${a.map(x=>`<li>${esc(x.title)}</li>`).join("")}</ul>`:""}</li>`}).join("")}</ul>`:""}
     </section>
     <section class="pan" aria-labelledby="aaH"><h2 id="aaH">${I("list_alt")}Actions you tried</h2><p class="sub">Everything you did this session, including work you later removed.</p>
      <dl class="kv">
+      <dt class="grp">Setting up</dt><dt>Role chosen</dt><dd>${L.role?L.role[0].toUpperCase()+L.role.slice(1):"None"}</dd><dt>Classes created</dt><dd>${L.classesCreated}</dd>${L.classesJoined?`<dt>Classes joined</dt><dd>${L.classesJoined}</dd>`:""}
       <dt class="grp">Stream</dt><dt>Posts created</dt><dd>${L.postsCreated}</dd><dt>Posts edited</dt><dd>${L.postsEdited}</dd><dt>Posts deleted</dt><dd>${L.postsRemoved}</dd>
       <dt class="grp">Classwork</dt><dt>Topics created</dt><dd>${L.topicsCreated}</dd><dt>Assignments created</dt><dd>${L.assignmentsCreated}</dd><dt>…filed when created</dt><dd>${L.createdFiled}</dd><dt>…left unfiled</dt><dd>${L.createdUnfiled}</dd><dt>Assignments moved or edited</dt><dd>${L.assignmentsMoved+L.assignmentsEdited}</dd><dt>“Getting crowded?” note</dt><dd>${L.nudgeShown?"Shown":"Not shown"}</dd>
       <dt class="grp">People</dt><dt>Co-teacher invitations</dt><dd>${L.invitesSent}</dd><dt>Students added / removed</dt><dd>${L.studentsAdded} / ${L.studentsRemoved}</dd><dt>Class code regenerated</dt><dd>${L.codeRegenerations}</dd>
@@ -1436,7 +1600,8 @@ function openSummary(){
   showScreen("summary");el.scrollTop=0;$("#sumTitle").focus();
   el.querySelectorAll("input[type=radio]").forEach(r=>r.onchange=()=>{UI.self[r.name.slice(3)]=r.value});
   $("#transfer").oninput=e=>{UI.transfer=e.target.value};
-  el.querySelectorAll("[data-cont]").forEach(b=>b.onclick=()=>{showScreen("shell");UI.view="class";setTab(b.dataset.cont,true);renderDrawer();renderTop();focusTab()});
+  el.querySelectorAll("[data-cont]").forEach(b=>b.onclick=()=>{showScreen("shell");
+    if(K){openClass(K.id,b.dataset.cont);focusTab()}else goHome()});
   $("#sumReset").onclick=resetSandbox;$("#sumFinish").onclick=showFinish;
 }
 function showFinish(){const t=UI.transfer.trim();const el=$("#finish");

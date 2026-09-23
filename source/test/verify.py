@@ -11,7 +11,9 @@ async def main():
     await pg.goto(URL)
     st=lambda: pg.evaluate("__sandbox.state()")
     lg=lambda: pg.evaluate("__sandbox.log()")
+    cl=lambda: pg.evaluate("(()=>{const s=__sandbox.state();return s.classes.find(c=>c.id===s.activeId)||null})()")
     s0=await st()
+    ok("nothing is set up in advance",s0["classes"]==[] and s0["user"]["role"] is None and s0["activeId"] is None,str(s0))
     # OPENER (house spec: brand/OPENER.md)
     ok("opener is a modal region with the three partner logos",await pg.is_visible("#intro")
        and await pg.get_attribute("#intro","role")=="dialog" and await pg.get_attribute("#intro","aria-modal")=="true"
@@ -77,14 +79,39 @@ async def main():
     await p3.click("#vUnmute"); await p3.wait_for_timeout(200)
     ok("Turn on sound unmutes and hides itself",await p3.evaluate("!document.querySelector('#vid').muted") and await p3.is_hidden("#vUnmute"))
     await p3.close()
-    await pg.click("#beginBtn"); await pg.wait_for_timeout(200)
-    ok("Begin opens EDU 101 Stream",await pg.evaluate("document.querySelector('#tab-stream').getAttribute('aria-selected')")=="true")
+    await pg.click("#beginBtn"); await pg.wait_for_timeout(300)
+    # ROLE PICKER, then the teacher sets the class up (SPEC §2, §6.1-6.3)
+    ok("Begin Practice opens the role picker",await pg.is_visible("#role") and await pg.is_visible("#roleTeacher") and await pg.is_visible("#roleStudent"))
+    await pg.click("#roleTeacher"); await pg.wait_for_timeout(300)
+    ok("teacher lands on an empty Home with no classes",await pg.is_visible("#homeCreate") and (await st())["classes"]==[] and (await st())["user"]["role"]=="teacher")
+    await pg.click("#homeCreate"); await pg.wait_for_timeout(250)
+    ok("first Create class raises the consumer gate","Using Classroom at a school with students?" in await pg.inner_text("#cdT"))
+    ok("gate Continue is disabled until the box is ticked",await pg.is_disabled("#gateGo"))
+    await pg.check("#gateBox"); await pg.wait_for_timeout(100)
+    ok("ticking the box enables Continue",not await pg.is_disabled("#gateGo"))
+    await pg.click("#gateGo"); await pg.wait_for_timeout(250)
+    ok("gate hands over to Create class","Create class" in await pg.inner_text("#cdT") and await pg.is_disabled("#ccCreate"))
+    opts=await pg.eval_on_selector_all("#ccForm input","els=>els.map(e=>e.id)")
+    ok("Create class has the five fields",opts==["className","section","level","subject","room"],str(opts))
+    await pg.fill("#className","EDU 101"); await pg.fill("#section","Sandbox Class")
+    await pg.click("#ccCreate"); await pg.wait_for_timeout(150)
+    ok("submitting state: fields grey out and the button reads Creating…",
+       await pg.evaluate("document.querySelector('#ccCreate').textContent")=="Creating…" and await pg.is_disabled("#className") and await pg.is_disabled("#ccCancel"))
+    await pg.wait_for_timeout(900)
+    c=await cl()
+    ok("the new class is empty, as Classroom makes it",c["name"]=="EDU 101" and c["section"]=="Sandbox Class" and c["role"]=="owner"
+       and c["posts"]==[] and c["topics"]==[] and c["assignments"]==[] and c["students"]==[] and len(c["teachers"])==1,str(c))
+    import re as _re
+    ok("the class gets a generated code",bool(_re.fullmatch(r"[A-Z2-9]{3}-[A-Z2-9]{3}",c["code"])),c["code"])
+    ok("creating the class lands on its Stream",await pg.evaluate("document.querySelector('#tab-stream').getAttribute('aria-selected')")=="true")
+    ok("the gate is shown only once",await pg.evaluate("__sandbox.state().flags.gateSeen")==True)
     # TAB INTROS (Classroom-style feature-intro card, silent animation)
+    sBefore=json.dumps(await st())
     ok("Stream intro shows on first visit",await pg.is_visible(".dlg.tabcard") and "Stream" in await pg.inner_text("#cdT"))
     ok("intro focuses Got it",await pg.evaluate("document.activeElement.id")=="introOk")
     ok("intro illustration has a text alternative",bool(await pg.get_attribute(".iv[role=img]","aria-label")))
     await pg.click("#introOk"); await pg.wait_for_timeout(100)
-    ok("intro closes, focus returns to tab, state untouched",await pg.evaluate("document.activeElement.id")=="tab-stream" and json.dumps(await st())==json.dumps(s0))
+    ok("intro closes, focus returns to tab, state untouched",await pg.evaluate("document.activeElement.id")=="tab-stream" and json.dumps(await st())==sBefore)
     # FOUNDATIONS against the reference pack (data/tokens.json, CHECKLIST.md)
     shell=await pg.evaluate("""(()=>{const cs=(s,p)=>getComputedStyle(document.querySelector(s))[p];
       const r=s=>document.querySelector(s).getBoundingClientRect();
@@ -117,26 +144,22 @@ async def main():
     ok("Post disabled for whitespace",await pg.is_disabled("#annPost"))
     await pg.fill("#annText","Welcome, everyone. Our first class begins on Monday.")
     await pg.click("#annPost"); await pg.wait_for_timeout(100)
-    s=await st()
-    ok("post appears at top as You/Just now",s["posts"][0]["author"]=="You" and s["posts"][0]["when"]=="Just now" and len(s["posts"])==2)
+    s=await cl()
+    ok("post appears at top as You/Just now",s["posts"][0]["author"]=="You" and s["posts"][0]["when"]=="Just now" and len(s["posts"])==1)
     await pg.fill("#annText","x") if await pg.query_selector("#annText") else None
     # second post, then delete it
     await pg.click("#annOpen"); await pg.fill("#annText","<b>Second</b> post"); await pg.click("#annPost")
     txt=await pg.inner_text(".post >> nth=0")
     ok("user text rendered safely",("<b>Second</b>" in txt) and await pg.evaluate("!document.querySelector('.post-b b')"))
-    pid=(await st())["posts"][0]["id"]
+    pid=(await cl())["posts"][0]["id"]
     await pg.click(f'[data-post-menu="{pid}"]'); await pg.click("#mDeletePost")
-    s=await st(); ok("own post removed",len(s["posts"])==2)
-    await pg.click('[data-post-menu="post-welcome"]')
-    items=await pg.eval_on_selector_all(".menu [role=menuitem]","els=>els.map(e=>e.textContent)")
-    ok("welcome post has no delete/edit",not any("Delete" in i or "Edit" in i for i in items),str(items))
-    await pg.keyboard.press("Escape")
+    s=await cl(); ok("own post removed",len(s["posts"])==1)
     # edit own post
-    pid=(await st())["posts"][0]["id"]
+    pid=(await cl())["posts"][0]["id"]
     await pg.click(f'[data-post-menu="{pid}"]'); await pg.click("#mEditPost"); await pg.fill("#editText","  ")
     ok("edit save disabled when empty",await pg.is_disabled("#editSave"))
     await pg.fill("#editText","Edited text"); await pg.click("#editSave")
-    ok("post edited",(await st())["posts"][0]["text"]=="Edited text")
+    ok("post edited",(await cl())["posts"][0]["text"]=="Edited text")
     # CLASSWORK
     await pg.click("#tab-classwork"); await pg.wait_for_timeout(100)
     ok("Classwork intro shows on first visit","topics" in (await pg.inner_text(".dlg.tabcard")).lower())
@@ -153,7 +176,7 @@ async def main():
     opts=await pg.eval_on_selector_all("#aTopic option","els=>els.map(e=>e.textContent)")
     ok("topic selector from state",opts==["No topic","Week 1"],str(opts))
     await pg.fill("#aTitle","Introduce yourself"); await pg.select_option("#aTopic",label="Week 1"); await pg.click("#aAssign")
-    s=await st(); ok("assignment filed under Week 1",s["assignments"][0]["topicId"]==s["topics"][0]["id"])
+    s=await cl(); ok("assignment filed under Week 1",s["assignments"][0]["topicId"]==s["topics"][0]["id"])
     ok("topic count shows 1 item","1 item" in await pg.inner_text(f'[data-topic="{s["topics"][0]["id"]}"] .tcount'))
     for n in ["Loose A","Loose B"]:
         await pg.click("#createBtn"); await pg.click("#mAssignment"); await pg.fill("#aTitle",n); await pg.click("#aAssign")
@@ -167,9 +190,9 @@ async def main():
     ok("nudge not repeated at 3 unfiled",not await pg.query_selector("#nudge"))
     ok("No topic section lists 3","3 items" in await pg.inner_text("#h-nt + .tcount"))
     # move
-    aid=[a for a in (await st())["assignments"] if a["title"]=="Loose C"][0]["id"]
+    aid=[a for a in (await cl())["assignments"] if a["title"]=="Loose C"][0]["id"]
     await pg.click(f'[data-item-menu="{aid}"]'); await pg.click("#mMove"); await pg.select_option("#moveTopic",label="Week 1"); await pg.click("#moveGo")
-    ok("move to topic",[a for a in (await st())["assignments"] if a["id"]==aid][0]["topicId"] is not None)
+    ok("move to topic",[a for a in (await cl())["assignments"] if a["id"]==aid][0]["topicId"] is not None)
     # editing an assignment and changing its topic in one commit is one logged action
     l0=await lg()
     await pg.click(f'[data-item-menu="{aid}"]'); await pg.click(".menu [role=menuitem]")
@@ -177,27 +200,27 @@ async def main():
     l1=await lg()
     ok("edit that also changes topic counts once",(l1["assignmentsEdited"]+l1["assignmentsMoved"])-(l0["assignmentsEdited"]+l0["assignmentsMoved"])==1,
        f'edited {l0["assignmentsEdited"]}->{l1["assignmentsEdited"]}, moved {l0["assignmentsMoved"]}->{l1["assignmentsMoved"]}')
-    ok("summary total matches actions",[a for a in (await st())["assignments"] if a["id"]==aid][0]["topicId"] is None)
+    ok("summary total matches actions",[a for a in (await cl())["assignments"] if a["id"]==aid][0]["topicId"] is None)
     # PEOPLE
     await pg.click("#tab-people"); await pg.wait_for_timeout(100)
     ok("People intro shows on first visit",await pg.is_visible(".dlg.tabcard")); await pg.click("#introOk")
     await pg.click("#inviteBtn"); await pg.fill("#invEmail","not-an-email"); await pg.click("#invSubmit")
-    ok("invalid email rejected",len((await st())["teachers"])==1 and await pg.get_attribute("#invEmail","aria-invalid")=="true")
+    ok("invalid email rejected",len((await cl())["teachers"])==1 and await pg.get_attribute("#invEmail","aria-invalid")=="true")
     await pg.fill("#invEmail","tutor@example.com"); await pg.click("#invSubmit")
-    s=await st(); ok("co-teacher pending",s["teachers"][1]["status"]=="pending" and "Pending" in await pg.inner_text("#panel"))
+    s=await cl(); ok("co-teacher pending",s["teachers"][1]["status"]=="pending" and "Pending" in await pg.inner_text("#panel"))
     ok("owner has no remove control",await pg.evaluate("!document.querySelector('.prow .b-owner').parentElement.querySelector('[data-teacher-menu]')"))
     await pg.click("#addStudentBtn"); ok("Add student disabled when empty",await pg.is_disabled("#stuSubmit"))
     await pg.fill("#stuName","Ada Okafor"); await pg.click("#stuSubmit")
-    ok("student added, headcount 3",len((await st())["students"])==3 and "3 students" in await pg.inner_text("#headcount"))
-    sid=(await st())["students"][0]["id"]
+    ok("student added, headcount 1",len((await cl())["students"])==1 and "1 student" in await pg.inner_text("#headcount"))
+    sid=(await cl())["students"][0]["id"]
     await pg.click(f'[data-student-menu="{sid}"]'); await pg.click(".menu [role=menuitem]")
-    ok("student removed, headcount 2",len((await st())["students"])==2 and "2 students" in await pg.inner_text("#headcount"))
-    codes=set();prev=(await st())["classCode"];same=False
+    ok("student removed, roster back to empty",len((await cl())["students"])==0 and "0 students" in await pg.inner_text("#headcount"))
+    codes=set();prev=(await cl())["code"];same=False
     for i in range(40):
-        await pg.click("#regenBtn"); c=(await st())["classCode"]; same|=(c==prev); prev=c
+        await pg.click("#regenBtn"); c=(await cl())["code"]; same|=(c==prev); prev=c
     ok("regenerate never repeats previous code",not same)
     # tab switching retains state
-    await pg.click("#tab-stream"); ok("stream posts retained",len(await pg.query_selector_all(".post"))==2)
+    await pg.click("#tab-stream"); ok("stream posts retained",len(await pg.query_selector_all(".post"))==1)
     # help + guide don't change state
     before=json.dumps(await st())
     await pg.click("#dHelp"); await pg.click("#hWhat"); await pg.click("#hIntro"); await pg.wait_for_timeout(100)
@@ -219,13 +242,28 @@ async def main():
     l=await lg(); ok("log counts committed actions",l["postsCreated"]==2 and l["postsRemoved"]==1 and l["topicsCreated"]==1 and l["assignmentsCreated"]==4 and l["invitesSent"]==1 and l["studentsAdded"]==1 and l["studentsRemoved"]==1,str(l))
     await pg.click("#sc-people-2"); await pg.fill("#transfer","Create topics before posting.")
     await pg.click("[data-cont='classwork']")
-    ok("continue returns with state",len((await st())["assignments"])==4 and await pg.evaluate("document.querySelector('#tab-classwork').getAttribute('aria-selected')")=="true")
+    ok("continue returns with state",len((await cl())["assignments"])==4 and await pg.evaluate("document.querySelector('#tab-classwork').getAttribute('aria-selected')")=="true")
     await pg.click("#dEnd"); await pg.click("#sumFinish")
     ok("finish shows transfer sentence","Create topics before posting." in await pg.inner_text("#finish"))
-    old=(await st())["classCode"]
-    await pg.click("#finAgain"); s=await st(); l=await lg()
-    ok("reset restores seed",len(s["posts"])==1 and not s["topics"] and not s["assignments"] and len(s["teachers"])==1 and len(s["students"])==2 and s["flags"]["unfiledNudgeShown"]==False and s["classCode"]!=old)
+    await pg.click("#finAgain"); await pg.wait_for_timeout(300); s=await st(); l=await lg()
+    ok("reset clears the sandbox and returns to the role picker",await pg.is_visible("#role") and s["classes"]==[] and s["user"]["role"] is None and s["flags"]["unfiledNudgeShown"]==False,str(s))
     ok("reset clears log",l["postsCreated"]==0 and l["invitesSent"]==0 and l["codeRegenerations"]==0)
+    # JOIN A CLASS AS A STUDENT (SPEC §6.9) and the student's view of it
+    await pg.click("#roleStudent"); await pg.wait_for_timeout(250)
+    await pg.click("#homeCreate"); await pg.wait_for_timeout(250)
+    ok("student Home offers Join class","Join class" in await pg.inner_text("#cdT"))
+    ok("Join is disabled until a code is typed",await pg.is_disabled("#jcJoin"))
+    await pg.fill("#jcCode","ab1"); await pg.click("#jcJoin"); await pg.wait_for_timeout(150)
+    ok("a code under 5 characters is rejected",await pg.get_attribute("#jcCode","aria-invalid")=="true" and (await st())["classes"]==[])
+    await pg.fill("#jcCode","zk4m9q"); await pg.click("#jcJoin"); await pg.wait_for_timeout(400)
+    c=await cl()
+    ok("joining puts the learner in the class as a student",c["role"]=="student" and c["code"]=="ZK4M9Q" and len(c["posts"])==1)
+    ok("students get no composer, Create or invite controls",
+       not await pg.query_selector("#annOpen") and not await pg.query_selector("#createBtn") and not await pg.query_selector("#addStudentBtn"))
+    await pg.click(f'[data-post-menu="{c["posts"][0]["id"]}"]'); await pg.wait_for_timeout(100)
+    items=await pg.eval_on_selector_all(".menu [role=menuitem]","els=>els.map(e=>e.textContent)")
+    ok("a student cannot edit or delete the teacher's post",not any("Delete" in i or "Edit" in i for i in items),str(items))
+    await pg.keyboard.press("Escape")
     ok("no localStorage used",await pg.evaluate("localStorage.length")==0)
     ok("no JS errors",not errs,str(errs))
     await b.close()

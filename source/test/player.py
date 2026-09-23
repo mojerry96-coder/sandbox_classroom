@@ -21,6 +21,6 @@ async def main():
     await pg.evaluate("(()=>{const v=document.querySelector('#vid');v.currentTime=v.duration-1.5;v.play()})()"); await pg.wait_for_timeout(2500)
     print("end-card button shown and focused at end",await pg.is_visible("#vBegin") and await pg.evaluate("document.activeElement.id")=="vBegin")
     await pg.click("#vBegin"); await pg.wait_for_timeout(300)
-    print("end-card button starts practice",await pg.evaluate("!document.querySelector('.player') && !document.querySelector('#shell').hidden && document.querySelector('#tab-stream').getAttribute('aria-selected')==='true'"))
+    print("end-card button starts practice",await pg.evaluate("!document.querySelector('.player') && !document.querySelector('#role').hidden && !!document.querySelector('#roleTeacher')"))
     await b.close()
 asyncio.run(main())
