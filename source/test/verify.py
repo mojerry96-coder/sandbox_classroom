@@ -339,6 +339,33 @@ async def main():
       rows:document.querySelectorAll('table.grades tbody tr').length,
       unmarked:document.querySelectorAll('.nomark').length}))()""")
     ok("every student has an unmarked cell for each piece of work",grades["rows"]>=1 and grades["cols"]>=2 and grades["unmarked"]>=1,str(grades))
+    # THE OTHER VIEWS (phase 5): they are views over the classes that exist
+    await pg.click("#brandLink"); await pg.wait_for_timeout(250)
+    home=await pg.evaluate("""(()=>({sections:[...document.querySelectorAll('.home .scard h2')].map(h=>h.textContent),
+      cards:document.querySelectorAll('.ccard').length,menu:!!document.querySelector('[data-card-menu]'),
+      due:document.querySelector('.cbody .due')?document.querySelector('.cbody .due').textContent:null}))()""")
+    ok("Home (Teaching) shows Recently due and Classes",home["sections"]==["Recently due","Classes"] and home["cards"]==1 and home["menu"],str(home))
+    ok("the class card carries its due line",home["due"] in ("No work due soon","Woohoo, no work due soon!"),str(home))
+    for nav,expect in (("Calendar","Calendar"),("To review","To review"),("Archived classes","Archived classes"),("Settings","Settings")):
+        await pg.click(f'#drawer [data-nav="{nav}"]'); await pg.wait_for_timeout(250)
+        ok(f"{nav} is a real screen",expect in await pg.inner_text(".vbody, .viewpage"))
+    await pg.click('#drawer [data-nav="To review"]'); await pg.wait_for_timeout(250)
+    ok("To review has its two tabs",len(await pg.query_selector_all('[data-vtab]'))==2)
+    await pg.click('#drawer [data-nav="Settings"]'); await pg.wait_for_timeout(200)
+    sw=await pg.evaluate("""(()=>{const s=document.querySelector('.sw');const r=s.getBoundingClientRect();
+      return {w:Math.round(r.width),h:Math.round(r.height),groups:document.querySelectorAll('.notegrp').length}})()""")
+    ok("Settings has the notification groups with 52x32 switches",sw["w"]==52 and sw["h"]==32 and sw["groups"]==5,str(sw))
+    # archive a class from its card menu, find it under Archived, restore it
+    await pg.click("#brandLink"); await pg.wait_for_timeout(200)
+    await pg.click("[data-card-menu]"); await pg.wait_for_timeout(150)
+    await pg.click('.menu [role=menuitem]:last-child'); await pg.wait_for_timeout(200)
+    await pg.click("#arGo"); await pg.wait_for_timeout(300)
+    ok("archiving takes the class out of Home",len(await pg.query_selector_all(".ccard"))==0)
+    await pg.click('#drawer [data-nav="Archived classes"]'); await pg.wait_for_timeout(250)
+    ok("the archived class is listed under Archived classes",len(await pg.query_selector_all(".ccard"))==1)
+    await pg.click("[data-card-menu]"); await pg.click('.menu [role=menuitem]'); await pg.wait_for_timeout(300)
+    ok("restoring puts it back on Home",len(await pg.query_selector_all(".ccard"))==1 and await pg.evaluate("!document.querySelector('#main').textContent.includes('None of your classes')"))
+    await pg.click("#drawer [data-class]"); await pg.wait_for_timeout(250)   # back into the class
     await pg.click("#tab-people"); await pg.wait_for_timeout(200)   # the class code control lives on People
     codes=set();prev=(await cl())["code"];same=False
     for i in range(40):

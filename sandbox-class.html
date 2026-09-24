@@ -270,6 +270,41 @@ body.rail .ni .rlbl{display:block;font:400 12px/16px var(--fs);text-align:center
 @keyframes snack{from{opacity:.001;transform:translateY(12px)}}
 @media (max-width:600px){.snack{left:16px;right:16px;min-width:0;bottom:92px}}
 
+/* ============================== The other views (phase 5) ============================== */
+.viewpage{padding:8px 24px 140px;max-width:1100px}
+.vhead{display:flex;align-items:center;gap:16px;flex-wrap:wrap;min-height:64px}
+.vhead h1{font:400 24px/32px var(--fs);margin:0;flex:1}
+.vbody{padding-top:8px}
+.emptyline{color:var(--onv);font:400 14px/20px var(--fs);margin:16px 0}
+.scard h2{font:400 22px/28px var(--fs);margin:0 0 8px}
+.scard h3{font:500 14px/20px var(--fs);margin:20px 0 4px;color:var(--onv)}
+.sinfo{font:400 13px/18px var(--fs);color:var(--onv)}
+.cw-empty.small{padding:24px 0}
+.cw-empty.small b{font:400 18px/24px var(--fs)}
+.worklist{list-style:none;margin:8px 0 0;padding:0}
+.worklist li{display:flex;align-items:center;gap:16px;min-height:64px;border-bottom:1px solid var(--olv);padding:8px 4px}
+.worklist .icon{width:40px;height:40px;border-radius:50%;background:var(--sc);color:var(--onv);display:grid;place-items:center;flex:none}
+.worklist .t{flex:1;font:400 14px/20px var(--fs)}
+.worklist .t small{display:block;color:var(--onv)}
+.worklist .d{color:var(--onv);font:400 13px/18px var(--fs)}
+.cal{border:1px solid var(--olv);border-radius:12px;overflow:hidden;margin-top:8px}
+.calrow{display:grid;grid-template-columns:repeat(5,1fr)}
+.calrow.head>div{padding:12px;font:500 13px/18px var(--fs);color:var(--onv);border-bottom:1px solid var(--olv);background:var(--sc)}
+.calcell{min-height:120px;border-right:1px solid var(--olv);padding:8px;display:flex;flex-direction:column;gap:6px}
+.calcell:last-child{border-right:0}
+.calcell .chip{background:var(--pric);color:var(--pri);border-radius:8px;padding:4px 8px;font:400 12px/16px var(--fs);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.notegrp{margin-bottom:8px}
+.swrow{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:48px;font:400 14px/20px var(--fs)}
+/* Material switch, 52x32, as measured */
+.sw{appearance:none;-webkit-appearance:none;width:52px;height:32px;border-radius:9999px;background:var(--schh);border:2px solid #79747E;position:relative;flex:none;margin:0;transition:background .2s var(--ease),border-color .2s var(--ease)}
+.sw:after{content:"";position:absolute;left:6px;top:50%;transform:translateY(-50%);width:16px;height:16px;border-radius:50%;background:#79747E;transition:all .2s var(--ease)}
+.sw:checked{background:var(--pri-filled);border-color:var(--pri-filled)}
+.sw:checked:after{left:24px;width:24px;height:24px;background:#fff}
+.sw:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.ccard .cmenu{position:absolute;right:4px;top:4px;z-index:2;color:#fff}
+.ccard .cmenu:hover{background:rgba(255,255,255,.18)}
+.cbody .due{margin:0;padding:12px 16px;font:400 13px/18px var(--fs);color:var(--onv)}
+
 /* ============================== People: invite students (phase 4) ============================== */
 .invlink{background:var(--schh);border-radius:12px;padding:16px;margin-bottom:20px}
 .invlink .k{font:500 14px/20px var(--fs);color:var(--onv);margin-bottom:8px}
@@ -871,7 +906,7 @@ function seed(){
   seq=0;
   /* Nothing is set up in advance: the learner picks a role, then creates (or joins) the class. */
   S={user:{role:null,name:"You"},classes:[],activeId:null,flags:{unfiledNudgeShown:false,gateSeen:false,promoSeen:false}};
-  L={role:null,classesCreated:0,classesJoined:0,
+  L={role:null,classesCreated:0,classesJoined:0,classesArchived:0,
      tabsVisited:[],tabOpens:{stream:0,classwork:0,people:0,grades:0},
      postsCreated:0,postsEdited:0,postsRemoved:0,
      topicsCreated:0,topicsRenamed:0,topicsRemoved:0,
@@ -1032,7 +1067,7 @@ $("#hamb").onclick=()=>{
 function closeMobileDrawer(){document.body.classList.remove("drawer-open")}
 function renderDrawer(){
   const act=k=>{if(UI.view==="home"&&k==="home")return"act";if(UI.view==="class"&&A&&k===A.id)return"act";if(UI.view==="placeholder"&&UI.placeholder===k)return"act";return""};
-  const teaching=S.classes.filter(c=>c.role==="owner"),enrolled=S.classes.filter(c=>c.role==="student");
+  const teaching=S.classes.filter(c=>c.role==="owner"&&!c.archived),enrolled=S.classes.filter(c=>c.role==="student"&&!c.archived);
   const item=(k,icon,label,rail)=>`<button class="ni ${act(k)}" data-nav="${k}" ${act(k)?'aria-current="page"':""}>${I(icon,act(k)?"fill":"")}<span class="lbl">${label}</span><span class="rlbl" aria-hidden="true">${rail||label}</span></button>`;
   const classItem=c=>`<button class="ni ${act(c.id)}" data-class="${c.id}" ${act(c.id)?'aria-current="page"':""}><span class="ltr" aria-hidden="true">${esc(c.name.trim()[0].toUpperCase())}</span><span class="lbl">${esc(c.name)}${c.section?`<small>${esc(c.section)}</small>`:""}</span><span class="rlbl" aria-hidden="true">${esc(excerpt(c.name,9))}</span></button>`;
   const group=(key,title,icon,label,classes,open)=>classes.length?`<div class="gap"></div>
@@ -1059,38 +1094,133 @@ $("#main").addEventListener("scroll",()=>$("#topbar").classList.toggle("scrolled
 function renderMain(){
   const m=$("#main");
   if(UI.view==="home")return renderHome(m);
-  if(UI.view==="placeholder"){m.innerHTML=`<div class="sheet"><div class="placeholder-page">${I("explore")}<b>${esc(UI.placeholder)} isn't part of this practice</b>This sandbox focuses on the Stream, Classwork and People tabs in EDU 101.<div style="margin-top:20px"><button class="fb" id="phGo">${A?`Open ${esc(A.name)}`:"Back to Home"}</button></div></div></div>`;$("#phGo").onclick=()=>A?openClass(A.id,"stream"):goHome();return}
+  if(UI.view==="placeholder")return renderView(m,UI.placeholder);
   renderClass(m);
+}
+
+/* ======================================================================
+   THE OTHER VIEWS — Calendar, To-do, To review, Archived, Settings.
+   Views over the same four nouns, so they read from the classes that exist.
+   ====================================================================== */
+const VIEWS={
+ "Calendar":{icon:"calendar_today",build:()=>{
+   const work=S.classes.filter(c=>!c.archived).flatMap(c=>c.assignments.filter(a=>a.due).map(a=>({c,a})));
+   const days=["Mon","Tue","Wed","Thu","Fri"];
+   return `<div class="vhead"><h1>Calendar</h1><button class="ob" id="vwFilter">${I("filter_list")}All classes</button></div>
+    <div class="cal"><div class="calrow head">${days.map(d=>`<div>${d}</div>`).join("")}</div>
+     <div class="calrow">${days.map((d,i)=>`<div class="calcell">${work.filter((_,k)=>k%5===i).map(({c,a})=>`<span class="chip" title="${esc(c.name)}">${esc(excerpt(a.title,18))}</span>`).join("")}</div>`).join("")}</div></div>
+    ${work.length?"":`<div class="cw-empty small">${EMPTY_RECENT}<b>Nothing scheduled</b><span>Work with a due date appears here. Set a due date on an assignment to see it.</span></div>`}`}},
+ "To-do":{icon:"task_alt",tabs:["Assigned","Missing","Done"],build:(tab)=>{
+   const work=S.classes.filter(c=>c.role==="student"&&!c.archived).flatMap(c=>c.assignments.map(a=>({c,a})));
+   return listView(work,tab==="Assigned"?"You don’t have any work assigned":tab==="Missing"?"No missing work. Nice.":"Nothing turned in yet")}},
+ "To review":{icon:"checklist",tabs:["To review","Reviewed"],build:(tab)=>{
+   const work=S.classes.filter(c=>c.role==="owner"&&!c.archived).flatMap(c=>c.assignments.map(a=>({c,a})));
+   return tab==="To review"?listView(work,"No work to review yet. Student work would appear here."):listView([],"Nothing reviewed yet")}},
+ "Archived classes":{icon:"archive",build:()=>{
+   const arch=S.classes.filter(c=>c.archived);
+   return arch.length?`<div class="vhead"><h1>Archived classes</h1></div><ul class="grid">${arch.map(cardHTML).join("")}</ul>`
+     :`<div class="vhead"><h1>Archived classes</h1></div><div class="cw-empty">${EMPTY_ARCHIVE}<b>None of your classes have been archived</b>
+       <div style="margin-top:16px"><button class="tb" id="vwWhat">What does this mean?</button></div></div>`}},
+ "Settings":{icon:"settings",build:()=>`<div class="vhead"><h1>Settings</h1></div>
+   <section class="scard"><h2>Profile</h2>
+     <div class="setrow"><div><b>Profile picture</b><span>Shown beside everything you post</span></div><button class="ob" data-note="Profile pictures aren't part of this practice.">Change</button></div>
+     <div class="setrow"><div><b>Account settings</b><span>Change your password and security options, and access other Google services.</span></div><button class="ob" data-note="Account settings aren't part of this practice.">Manage</button></div>
+     <div class="setrow"><div><b>Change name</b><span>To change your name, go to your account settings.</span></div></div>
+   </section>
+   <section class="scard"><h2>Notifications</h2>
+     ${[["Email","Allow email notifications"],["Comments","Comments on your posts|Comments that mention you|Private comments on work"],
+        ["Classes you're enrolled in","Work and other posts from teachers|Returned work and grades from your teachers|Invitations to join classes as a student|Due-date reminders for your work"],
+        ["Classes you teach","Late submissions of student work|Resubmissions of student work|Invitations to co-teach classes|Scheduled post published or failed"],
+        ["Class notifications","Notifications for each class you are in"]]
+       .map(([grp,items])=>`<div class="notegrp"><h3>${grp}</h3>${items.split("|").map(l=>`<label class="swrow"><span>${l}</span><input type="checkbox" class="sw" checked data-note="Notification settings are simulated; no mail is ever sent."></label>`).join("")}</div>`).join("")}
+   </section>`}
+};
+function listView(items,emptyLine){
+  return items.length?`<ul class="worklist">${items.map(({c,a})=>`<li><span class="icon">${I(workOf(a).icon)}</span><span class="t">${esc(a.title)}<small>${esc(c.name)}</small></span><span class="d">${a.due?esc(a.due):"No due date"}</span></li>`).join("")}</ul>`
+    :`<p class="emptyline">${emptyLine}</p>`;
+}
+const EMPTY_ARCHIVE=`<svg width="200" height="140" viewBox="0 0 200 140" aria-hidden="true"><rect x="40" y="40" width="120" height="70" rx="10" fill="#E9EEF6"/><rect x="40" y="40" width="120" height="20" rx="10" fill="#DDE3EA"/><rect x="82" y="72" width="36" height="8" rx="4" fill="#A8C7FA"/></svg>`;
+function renderView(m,name){
+  const V=VIEWS[name];
+  if(!V){m.innerHTML=`<div class="sheet"><div class="placeholder-page">${I("explore")}<b>${esc(name)} isn't part of this practice</b></div></div>`;return}
+  const tabs=V.tabs||null;
+  if(tabs&&!tabs.includes(UI.viewTab))UI.viewTab=tabs[0];
+  m.innerHTML=`<div class="sheet"><div class="viewpage">
+    ${tabs?`<div class="vhead"><h1>${esc(name)}</h1></div><div class="ctabs" role="tablist" aria-label="${esc(name)}">
+      ${tabs.map(t=>`<button class="ctab" role="tab" id="vt-${t.replace(/\W/g,"")}" data-vtab="${esc(t)}" aria-selected="${UI.viewTab===t}" tabindex="${UI.viewTab===t?0:-1}">${esc(t)}</button>`).join("")}</div>`:""}
+    <div class="vbody">${V.build(UI.viewTab)}</div></div></div>`;
+  $$("[data-vtab]").forEach(b=>b.onclick=()=>{UI.viewTab=b.dataset.vtab;renderView(m,name)});
+  $$("[data-note]").forEach(b=>b.onclick=()=>snack(b.dataset.note));
+  $$(".sw").forEach(sw=>sw.onchange=()=>snack("Notification settings are simulated; no mail is ever sent."));
+  const f=$("#vwFilter");if(f)f.onclick=()=>snack("Filtering the calendar isn't part of this practice.");
+  const wt=$("#vwWhat");if(wt)wt.onclick=()=>snack("Archiving keeps a class out of Home without deleting it.");
+  $$("[data-open-class]").forEach(b=>b.onclick=e=>{e.preventDefault();openClass(b.dataset.openClass,"stream")});
+  $$("[data-card-menu]").forEach(b=>b.onclick=e=>{e.stopPropagation();const c=S.classes.find(x=>x.id===b.dataset.cardMenu);
+    openMenu(b,[{icon:"archive",label:"Restore",fn:()=>{c.archived=false;goHome();snack(`${c.name} restored.`)}}],{alignRight:true})});
 }
 
 /* ---------------- Home (reference-backed: Home screenshot) ---------------- */
 const EMPTY_HOME=`<svg width="220" height="150" viewBox="0 0 220 150" aria-hidden="true"><rect x="26" y="34" width="168" height="92" rx="12" fill="#E9EEF6"/><rect x="44" y="52" width="70" height="9" rx="4.5" fill="#A8C7FA"/><rect x="44" y="72" width="120" height="7" rx="3.5" fill="#fff"/><rect x="44" y="88" width="96" height="7" rx="3.5" fill="#fff"/><circle cx="176" cy="112" r="18" fill="#0B57D0"/><path d="M176 103v18M167 112h18" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>`;
 function renderHome(m){
-  const teaching=S.classes.filter(c=>c.role==="owner"),enrolled=S.classes.filter(c=>c.role==="student");
+  const teaching=S.classes.filter(c=>c.role==="owner"&&!c.archived),enrolled=S.classes.filter(c=>c.role==="student"&&!c.archived);
   const both=teaching.length&&enrolled.length;
   if(both&&!["teaching","enrolled"].includes(UI.homeView))UI.homeView="teaching";
-  const list=both?(UI.homeView==="teaching"?teaching:enrolled):(teaching.length?teaching:enrolled);
+  const view=both?UI.homeView:(enrolled.length&&!teaching.length?"enrolled":"teaching");
+  const list=view==="teaching"?teaching:enrolled;
   const teacher=S.user.role==="teacher";
+  const section=(id,title,info,body,link)=>`<section class="scard" aria-labelledby="${id}">
+    <div class="shead"><h2 id="${id}">${title}</h2>${info?`<span class="sinfo">${info}</span>`:""}<span class="sp"></span>${link?`<button class="tb" data-home-link="${esc(link)}">${esc(link)}</button>`:""}</div>
+    ${body}</section>`;
   m.innerHTML=`<div class="home">
    ${both?`<div class="seg" role="tablist" aria-label="Class role">
-     <button role="tab" id="segTeaching" aria-selected="${UI.homeView==="teaching"}" data-home="teaching">${UI.homeView==="teaching"?I("check"):""}Teaching</button>
-     <button role="tab" id="segEnrolled" aria-selected="${UI.homeView==="enrolled"}" data-home="enrolled">${UI.homeView==="enrolled"?I("check"):""}Enrolled</button></div>`:""}
-   <section class="scard" aria-labelledby="clsH"><div class="shead"><h2 id="clsH">Classes</h2></div>
+     <button role="tab" id="segTeaching" aria-selected="${view==="teaching"}" data-home="teaching">${view==="teaching"?I("check"):""}Teaching</button>
+     <button role="tab" id="segEnrolled" aria-selected="${view==="enrolled"}" data-home="enrolled">${view==="enrolled"?I("check"):""}Enrolled</button></div>`:""}
+   ${view==="teaching"
+     ? section("rdH","Recently due","","<div class=\"cw-empty small\">"+EMPTY_RECENT+"<b>No recent assignments to review</b><span>See assignments from the past 7 days that need review</span></div>","View work in progress")
+     : section("dsH","Due soon","","<p class=\"emptyline\">You don't have any work due in the next 7 days</p>","View To-do")
+       +section("cltH","Class learning tools","Gems and Notebooks that have been recently posted by your teachers","<p class=\"emptyline\">You don’t have any assigned class learning tools</p>","")}
+   ${section("clsH","Classes","","",teacher?"Add class":"")}
    ${list.length?`<ul class="grid">${list.map(cardHTML).join("")}</ul>`
      :`<div class="cw-empty">${EMPTY_HOME}<b>${teacher?"Create your first class":"Join your first class"}</b>
         <span>${teacher?"A class holds your Stream, Classwork and People. Nothing exists until you create it.":"Ask your teacher for the class code, then join with it."}</span>
         <div style="margin-top:20px"><button class="fb" id="homeCreate">${I("add")}${teacher?"Create class":"Join class"}</button></div></div>`}
-   </section></div>`;
+   </div>`;
   paintBanners();
   const hc=$("#homeCreate");if(hc)hc.onclick=()=>teacher?startCreateClass(hc):openJoinClass(hc);
   $$("[data-home]").forEach(b=>b.onclick=()=>{UI.homeView=b.dataset.home;renderMain()});
+  $$("[data-home-link]").forEach(b=>b.onclick=()=>{const l=b.dataset.homeLink;
+    if(l==="Add class")return startCreateClass(b);
+    if(l==="View To-do"){UI.view="placeholder";UI.placeholder="To-do";return renderAll()}
+    if(l==="View work in progress"){UI.view="placeholder";UI.placeholder="To review";return renderAll()}});
   $$("[data-open-class]").forEach(b=>b.onclick=e=>{e.preventDefault();openClass(b.dataset.openClass,"stream")});
   $$("[data-card-tab]").forEach(b=>b.onclick=()=>openClass(b.dataset.cardClass,b.dataset.cardTab));
+  $$("[data-card-menu]").forEach(b=>b.onclick=e=>{e.stopPropagation();const c=S.classes.find(x=>x.id===b.dataset.cardMenu);
+    openMenu(b,c.role==="owner"
+      ? [{icon:"edit",label:"Edit",fn:()=>{openClass(c.id,"stream");setTimeout(()=>classSettings($("#tbSettings")),80)}},
+         {icon:"content_copy",label:"Copy",fn:()=>snack("Copying a class isn't part of this practice.")},
+         {icon:"archive",label:"Archive",fn:()=>archiveClass(c)}]
+      : [{icon:"visibility_off",label:"Hide",fn:()=>snack("Hiding a class isn't part of this practice.")},
+         {icon:"person_remove",label:"Unenroll",fn:()=>unenrol(c)}],{alignRight:true})});
+}
+const EMPTY_RECENT=`<svg width="170" height="120" viewBox="0 0 170 120" aria-hidden="true"><rect x="30" y="30" width="110" height="64" rx="8" fill="#E9EEF6"/><rect x="44" y="46" width="48" height="7" rx="3.5" fill="#A8C7FA"/><rect x="44" y="62" width="82" height="6" rx="3" fill="#fff"/><rect x="44" y="76" width="60" height="6" rx="3" fill="#fff"/></svg>`;
+function archiveClass(c){
+  cDialog(`<h2 id="cdT">Archive ${esc(c.name)}?</h2><p>You and your students will no longer see this class in Home. You can find it under Archived classes.</p>
+   <div class="acts"><button class="tb" data-close>Cancel</button><button class="tb" id="arGo">Archive</button></div>`,
+  (d,close)=>{d.querySelector("#arGo").onclick=()=>{c.archived=true;if(A&&A.id===c.id){A=null;S.activeId=null}
+    L.classesArchived++;close(true);goHome();snack(`${c.name} archived.`)}});
+}
+function unenrol(c){
+  cDialog(`<h2 id="cdT">Unenroll from ${esc(c.name)}?</h2><p>You will be removed from the class and will no longer see its posts or work.</p>
+   <div class="acts"><button class="tb" data-close>Cancel</button><button class="tb" id="unGo">Unenroll</button></div>`,
+  (d,close)=>{d.querySelector("#unGo").onclick=()=>{S.classes=S.classes.filter(x=>x!==c);if(A&&A.id===c.id){A=null;S.activeId=null}
+    close(true);goHome();snack(`Unenrolled from ${c.name}.`)}});
 }
 function cardHTML(c){
   return `<li class="ccard"><div class="cban"><canvas class="cvs" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
    <a href="#" data-open-class="${c.id}" style="position:relative">${esc(c.name)}</a><div style="position:relative">${esc(c.section)}</div></div>
-   <span class="cav" aria-hidden="true">${esc((c.role==="owner"?"Y":c.teachers[0]?c.teachers[0].name:"T").trim()[0].toUpperCase())}</span><div class="cbody"></div>
+   <button class="ib cmenu" data-card-menu="${c.id}" aria-haspopup="menu" aria-expanded="false" aria-label="Class options for ${esc(c.name)}">${I("more_vert")}</button>
+   <span class="cav" aria-hidden="true">${esc((c.role==="owner"?"Y":c.teachers[0]?c.teachers[0].name:"T").trim()[0].toUpperCase())}</span>
+   <div class="cbody"><p class="due">${c.assignments&&c.assignments.length?"No work due soon":"Woohoo, no work due soon!"}</p></div>
    <div class="cfoot">${c.role==="owner"?`<button class="ib" aria-label="Open Classwork for ${esc(c.name)}" data-card-tab data-card-class="${c.id}" data-card-tab="classwork">${I("assignment_ind")}</button>
      <button class="ib" aria-label="Open People for ${esc(c.name)}" data-card-class="${c.id}" data-card-tab="people">${I("group")}</button>`:""}</div></li>`;
 }
