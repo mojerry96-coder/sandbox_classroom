@@ -61,8 +61,18 @@
     <span id="topact"></span>
     <span class="ib" aria-hidden="true"><span class="avatar">Y</span></span>
   </header>
+  <div id="route" class="routebar" hidden aria-hidden="true"></div>
   <nav id="drawer" aria-label="Main navigation"></nav>
-  <main id="main" tabindex="-1"></main>
+  <div id="content">
+    <div id="banners" class="banners"></div>
+    <main id="main" tabindex="-1"></main>
+  </div>
+  <!-- boot skeleton: what the product shows while the class list loads -->
+  <div id="boot" class="boot" hidden aria-hidden="true">
+    <div class="boot-bar"></div>
+    <div class="boot-drawer"><span class="sk pill"></span><span class="sk pill"></span><span class="spin"></span><span class="sk pill"></span><span class="sk pill"></span></div>
+    <div class="boot-canvas"></div>
+  </div>
   <button class="fab" id="helpFab" aria-label="Help">@@I:help@@</button>
 </div>
 

@@ -82,7 +82,9 @@ async def main():
     await pg.click("#beginBtn"); await pg.wait_for_timeout(300)
     # ROLE PICKER, then the teacher sets the class up (SPEC §2, §6.1-6.3)
     ok("Begin Practice opens the role picker",await pg.is_visible("#role") and await pg.is_visible("#roleTeacher") and await pg.is_visible("#roleStudent"))
-    await pg.click("#roleTeacher"); await pg.wait_for_timeout(300)
+    await pg.click("#roleTeacher"); await pg.wait_for_timeout(120)
+    ok("the boot skeleton shows while the shell loads (SPEC §7.1)",await pg.is_visible("#boot") and await pg.is_visible(".boot-bar") and await pg.is_visible(".boot .spin"))
+    await pg.wait_for_selector("#homeCreate",timeout=5000)
     ok("teacher lands on an empty Home with no classes",await pg.is_visible("#homeCreate") and (await st())["classes"]==[] and (await st())["user"]["role"]=="teacher")
     await pg.click("#homeCreate"); await pg.wait_for_timeout(250)
     ok("first Create class raises the consumer gate","Using Classroom at a school with students?" in await pg.inner_text("#cdT"))
@@ -366,6 +368,19 @@ async def main():
     await pg.click("[data-card-menu]"); await pg.click('.menu [role=menuitem]'); await pg.wait_for_timeout(300)
     ok("restoring puts it back on Home",len(await pg.query_selector_all(".ccard"))==1 and await pg.evaluate("!document.querySelector('#main').textContent.includes('None of your classes')"))
     await pg.click("#drawer [data-class]"); await pg.wait_for_timeout(250)   # back into the class
+    # STATES (phase 6): route progress and the cross-cutting banners
+    await pg.click("#brandLink"); await pg.wait_for_timeout(60)
+    ok("navigating raises the 4px route progress bar",await pg.is_visible("#route"))
+    await pg.wait_for_timeout(700); await pg.click("#drawer [data-class]"); await pg.wait_for_timeout(300)
+    await pg.wait_for_timeout(700)
+    ok("the route bar clears itself",not await pg.is_visible("#route"))
+    await pg.click("#tab-classwork"); await pg.wait_for_timeout(200)
+    await pg.click("#annOpen") if await pg.query_selector("#annOpen") else None
+    await pg.evaluate("__sandbox.banner('refresh')"); await pg.wait_for_timeout(150)
+    ok("a banner appears with its actions","Refresh your browser to update this page" in await pg.inner_text("#banners"))
+    await pg.click('#banners [data-act="dismiss"]'); await pg.wait_for_timeout(150)
+    ok("dismissing removes it",await pg.evaluate("document.querySelector('#banners').children.length")==0)
+    await pg.click("#tab-stream"); await pg.wait_for_timeout(200)
     await pg.click("#tab-people"); await pg.wait_for_timeout(200)   # the class code control lives on People
     codes=set();prev=(await cl())["code"];same=False
     for i in range(40):
@@ -411,6 +426,7 @@ async def main():
     await pg.fill("#jcCode","zk4m9q"); await pg.click("#jcJoin"); await pg.wait_for_timeout(400)
     c=await cl()
     ok("joining puts the learner in the class as a student",c["role"]=="student" and c["code"]=="ZK4M9Q" and len(c["posts"])==1)
+    ok("the joined class offers the co-teach banner","You're invited to teach this class" in await pg.inner_text("#banners"))
     ok("students get no composer, Create or invite controls",
        not await pg.query_selector("#annOpen") and not await pg.query_selector("#createBtn") and not await pg.query_selector("#addStudentBtn"))
     await pg.click(f'[data-post-menu="{c["posts"][0]["id"]}"]'); await pg.wait_for_timeout(100)

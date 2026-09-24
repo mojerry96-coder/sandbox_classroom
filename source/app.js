@@ -53,6 +53,7 @@ function makeClass(f,role){
   else{
     c.teachers.push({id:nid("t-"),name:f.teacher||"Ada Okafor",email:"",status:"owner"});
     c.students.push({id:nid("u"),name:"You",placeholder:false,isYou:true});
+    c.coteachOffer=true;
     c.posts.push({id:nid("post-"),author:f.teacher||"Ada Okafor",when:"Just now",edited:false,protected:true,
       text:"Welcome to the class. Everything you need for this week is under Classwork."});
   }
@@ -166,15 +167,15 @@ function showRolePicker(){
 }
 function chooseRole(r){
   S.user.role=r;L.role=r;
-  showScreen("shell");goHome();
+  showScreen("shell");bootSkeleton(()=>{goHome();const b=$("#plusBtn");b&&b.focus()});
   announce(r==="teacher"?"Teacher selected. Create your first class to begin.":"Student selected. Join a class with a code to begin.");
-  setTimeout(()=>{const b=$("#plusBtn");b&&b.focus()},80);
 }
 
 /* ======================================================================
    CLASSROOM SHELL
    ====================================================================== */
-function renderAll(){renderDrawer();renderTop();renderMain()}
+function renderAll(){renderDrawer();renderTop();renderMain();syncBanners()}
+function syncBanners(){if(!$("#banners"))return;clearBanners();if(UI.view==="class"&&A){if(A.archived)showBanner("archived");if(A.coteachOffer)showBanner("coteach")}}
 function renderTop(){
   const c=$("#crumb");
   const t=UI.view==="class"&&A?A.name:UI.view==="placeholder"?UI.placeholder:"";
@@ -208,8 +209,9 @@ function renderDrawer(){
     if(g==="teaching")UI.teachingOpen=!UI.teachingOpen;else UI.enrolledOpen=!UI.enrolledOpen;
     renderDrawer();$(`[data-group="${g}"]`).focus()});
 }
-function goHome(){UI.view="home";A=null;S.activeId=null;renderAll();$("#main").focus()}
+function goHome(){routeBar();UI.view="home";A=null;S.activeId=null;renderAll();$("#main").focus()}
 function openClass(id,tab){
+  routeBar();
   if(id){S.activeId=id;A=S.classes.find(c=>c.id===id)||null}
   if(!A){goHome();return}
   UI.view="class";setTab(tab||"stream",true);renderDrawer();renderTop()}
@@ -221,6 +223,43 @@ function renderMain(){
   if(UI.view==="placeholder")return renderView(m,UI.placeholder);
   renderClass(m);
 }
+
+/* ======================================================================
+   STATES — boot skeleton, route progress, banners (SPEC §3.5, §7.1, §7.4)
+   ====================================================================== */
+let routeT;
+function routeBar(ms=550){
+  const b=$("#route");if(!b)return;b.hidden=false;clearTimeout(routeT);routeT=setTimeout(()=>{b.hidden=true},ms);
+}
+function bootSkeleton(then){
+  const sk=$("#boot");sk.hidden=false;$("#drawer").innerHTML="";$("#main").innerHTML="";
+  announce("Page is loading\u2026");
+  setTimeout(()=>{sk.hidden=true;then()},reduceMotion()?0:700);
+}
+/* The five banners the product keeps in the DOM and reveals on trigger. */
+const BANNERS={
+  refresh:{text:"Refresh your browser to update this page",actions:[["Dismiss","dismiss"],["Refresh","refresh"]]},
+  stream:{text:"Stream was updated",actions:[["Show","show"]]},
+  archived:{text:"Class is archived. Restore it to add or edit anything.",actions:[["Restore","restore"]]},
+  coteach:{text:"You're invited to teach this class",actions:[["Accept","accept"]]},
+};
+function showBanner(kind){
+  const B=BANNERS[kind];if(!B)return;
+  const host=$("#banners");if(host.querySelector(`[data-banner="${kind}"]`))return;
+  const el=document.createElement("div");el.className="banner-strip";el.dataset.banner=kind;el.setAttribute("role","status");
+  el.innerHTML=`<span>${esc(B.text)}</span>${B.actions.map(([l,a])=>`<button class="tb" data-act="${a}">${l}</button>`).join("")}`;
+  host.appendChild(el);
+  el.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{const a=b.dataset.act;el.remove();
+    if(a==="refresh"){routeBar();renderAll();snack("Page refreshed (simulated).")}
+    if(a==="show"){setTab("stream");snack("Stream updated.")}
+    if(a==="restore"&&A){A.archived=false;renderAll();snack(`${A.name} restored.`)}
+    if(a==="accept"&&A){A.coteachOffer=false;A.role="owner";
+      A.teachers=[{id:"t-owner-"+A.id,name:"You",email:"",status:"owner"}].concat(A.teachers.filter(t=>t.status!=="owner"));
+      A.students=A.students.filter(x=>!x.isYou);renderAll();snack(`You now teach ${A.name}.`);emit("coteach:accepted")}});
+  announce(B.text);
+}
+/* only the state-driven banners are re-derived; transient ones stay until dismissed */
+function clearBanners(){$$("#banners [data-banner=archived],#banners [data-banner=coteach]").forEach(b=>b.remove())}
 
 /* ======================================================================
    THE OTHER VIEWS — Calendar, To-do, To review, Archived, Settings.
@@ -289,7 +328,7 @@ function renderHome(m){
   const teaching=S.classes.filter(c=>c.role==="owner"&&!c.archived),enrolled=S.classes.filter(c=>c.role==="student"&&!c.archived);
   const both=teaching.length&&enrolled.length;
   if(both&&!["teaching","enrolled"].includes(UI.homeView))UI.homeView="teaching";
-  const view=both?UI.homeView:(enrolled.length&&!teaching.length?"enrolled":"teaching");
+  const view=both?UI.homeView:(enrolled.length?"enrolled":teaching.length?"teaching":(S.user.role==="student"?"enrolled":"teaching"));
   const list=view==="teaching"?teaching:enrolled;
   const teacher=S.user.role==="teacher";
   const section=(id,title,info,body,link)=>`<section class="scard" aria-labelledby="${id}">
@@ -385,7 +424,7 @@ function focusTab(){const t=$("#tab-"+UI.tab);t&&t.focus()}
 function setTab(t,silent){
   if(UI.view!=="class"){UI.view="class";renderDrawer();renderTop()}
   if(t!==UI.tab)UI.nudgeVisible=false;
-  UI.tab=t;
+  UI.tab=t;routeBar(400);syncBanners();
   if(!L.tabsVisited.includes(t))L.tabsVisited.push(t);
   L.tabOpens[t]++;
   renderClass($("#main"));
@@ -475,6 +514,7 @@ function openComposer(trigger,editing){
     const submit=()=>{const t=ta.value.trim();if(!t)return;
       if(editing){editing.text=t;editing.edited=true;L.postsEdited++;close(true);renderPanel();snack("Post updated.");emit("post:edited");return}
       const id=nid("post-");A.posts.unshift({id,author:"You",when:"Just now",edited:false,protected:false,text:t,kind:"announcement"});
+      if(UI.tab!=="stream")showBanner("stream");
       L.postsCreated++;close(true);renderStream($("#panel"),id);snack("Posted to Stream.");emit("post:created")};
     d.querySelector("#annForm").onsubmit=e=>{e.preventDefault();submit()};
     sync()},trigger);
@@ -1355,5 +1395,6 @@ showScreen("welcome");playOpener();
 /* expose for automated verification only (read-only snapshot) */
 window.__sandbox={state:()=>JSON.parse(JSON.stringify(S)),log:()=>JSON.parse(JSON.stringify(L)),
   /* UI-only: lets the walkthrough recorder skip the tab intro cards */skipIntros:()=>TABS.forEach(([k])=>{introSeen[k]=true}),
-  /* UI-only: ends the opener at once (tests, recorder) */skipOpener:()=>{openerEnd&&openerEnd(false)}};
+  /* UI-only: ends the opener at once (tests, recorder) */skipOpener:()=>{openerEnd&&openerEnd(false)},
+  /* UI-only: raise one of the cross-cutting banners */banner:k=>showBanner(k)};
 })();
