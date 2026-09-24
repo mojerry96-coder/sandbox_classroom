@@ -299,7 +299,32 @@ async def main():
     await pg.fill("#invEmail","tutor@example.com"); await pg.click("#invSubmit")
     s=await cl(); ok("co-teacher pending",s["teachers"][1]["status"]=="pending" and "Pending" in await pg.inner_text("#panel"))
     ok("owner has no remove control",await pg.evaluate("!document.querySelector('.prow .b-owner').parentElement.querySelector('[data-teacher-menu]')"))
-    await pg.click("#addStudentBtn"); ok("Add student disabled when empty",await pg.is_disabled("#stuSubmit"))
+    # PEOPLE: invite students (SPEC §6.8)
+    ok("empty roster offers Invite students and the practice shortcut",
+       "Add students to this class" in await pg.inner_text("#panel") and await pg.is_visible("#peopleInvite") and await pg.is_visible("#peopleAdd"))
+    await pg.click("#peopleInvite"); await pg.wait_for_timeout(250)
+    inv=await pg.evaluate("""(()=>({title:document.querySelector('#cdT').textContent,
+      link:document.querySelector('#invUrl').textContent,contacts:document.querySelectorAll('.contact').length,
+      disabled:document.querySelector('#invGo').disabled}))()""")
+    ok("invite dialog shows the invite link and a contact list",inv["title"]=="Invite students" and inv["link"].startswith("https://classroom.google.com/c/")
+       and "?cjc=" in inv["link"] and inv["contacts"]>=4 and inv["disabled"],str(inv))
+    await pg.fill("#invSearch","ada"); await pg.wait_for_timeout(150)
+    ok("the search field filters the contacts",len(await pg.query_selector_all(".contact"))==1)
+    await pg.fill("#invSearch",""); await pg.wait_for_timeout(150)
+    await pg.click(".contact >> nth=0"); await pg.click(".contact >> nth=1"); await pg.wait_for_timeout(150)
+    ok("Invite enables once people are picked",not await pg.is_disabled("#invGo"))
+    await pg.click("#invGo"); await pg.wait_for_timeout(300)
+    st_c=await cl()
+    ok("invited students arrive as Invited, not Active",len(st_c["students"])==2 and all(x["status"]=="invited" for x in st_c["students"]),str(st_c["students"]))
+    ok("the roster shows the Invited badge","Invited" in await pg.inner_text("#panel"))
+    sid0=st_c["students"][0]["id"]
+    await pg.click(f'[data-student-menu="{sid0}"]'); await pg.wait_for_timeout(150)
+    await pg.click(".menu [role=menuitem] >> nth=0"); await pg.wait_for_timeout(250)
+    ok("the practice shortcut accepts an invitation",(await cl())["students"][0]["status"]=="active")
+    for s_id in [x["id"] for x in (await cl())["students"]]:
+        await pg.click(f'[data-student-menu="{s_id}"]'); await pg.click('.menu [role=menuitem]:last-child'); await pg.wait_for_timeout(200)
+    ok("removing them empties the roster again",len((await cl())["students"])==0)
+    await pg.click("#peopleAdd"); ok("Add student disabled when empty",await pg.is_disabled("#stuSubmit"))
     await pg.fill("#stuName","Ada Okafor"); await pg.click("#stuSubmit")
     ok("student added, headcount 1",len((await cl())["students"])==1 and "1 student" in await pg.inner_text("#headcount"))
     sid=(await cl())["students"][0]["id"]
@@ -340,7 +365,7 @@ async def main():
     t=await pg.inner_text("#summary")
     ok("summary says Not a score","Not a score" in t)
     ok("summary separates current vs actions","Your class right now" in t and "Actions you tried" in t)
-    l=await lg(); ok("log counts committed actions",l["postsCreated"]==2 and l["postsRemoved"]==1 and l["topicsCreated"]==1 and l["assignmentsCreated"]==4 and l["invitesSent"]==1 and l["studentsAdded"]==2 and l["studentsRemoved"]==1,str(l))
+    l=await lg(); ok("log counts committed actions",l["postsCreated"]==2 and l["postsRemoved"]==1 and l["topicsCreated"]==1 and l["assignmentsCreated"]==4 and l["invitesSent"]==1 and l["studentsAdded"]==2 and l["studentsRemoved"]==3 and l["studentsInvited"]==2 and l["invitesAccepted"]==1,str(l))
     await pg.click("#sc-people-2"); await pg.fill("#transfer","Create topics before posting.")
     await pg.click("[data-cont='classwork']")
     ok("continue returns with state",len((await cl())["assignments"])==4 and await pg.evaluate("document.querySelector('#tab-classwork').getAttribute('aria-selected')")=="true")

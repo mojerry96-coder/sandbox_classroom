@@ -270,6 +270,22 @@ body.rail .ni .rlbl{display:block;font:400 12px/16px var(--fs);text-align:center
 @keyframes snack{from{opacity:.001;transform:translateY(12px)}}
 @media (max-width:600px){.snack{left:16px;right:16px;min-width:0;bottom:92px}}
 
+/* ============================== People: invite students (phase 4) ============================== */
+.invlink{background:var(--schh);border-radius:12px;padding:16px;margin-bottom:20px}
+.invlink .k{font:500 14px/20px var(--fs);color:var(--onv);margin-bottom:8px}
+.invlink .row{display:flex;align-items:center;gap:8px}
+.invlink .url{flex:1;min-width:0;overflow-wrap:anywhere;font:400 14px/20px var(--fr);color:var(--pri)}
+.srch .dd{top:16px}
+.contacts{max-height:300px;overflow:auto;margin:8px -8px 0;padding:0 8px}
+.contact{display:flex;align-items:center;gap:16px;min-height:56px;padding:4px 8px;border-radius:8px;cursor:pointer}
+.contact:hover{background:var(--hov)}
+.contact input{width:18px;height:18px;accent-color:var(--pri-filled);flex:none}
+.contact .la{width:44px;height:44px;font:500 16px var(--fs)}
+.contact .n{flex:1;min-width:0;font:400 16px/24px var(--fs)}
+.contact .n small{display:block;font:400 13px/18px var(--fs);color:var(--onv);overflow:hidden;text-overflow:ellipsis}
+.contacts .none{color:var(--onv);font:400 14px/20px var(--fs);padding:16px 8px}
+.people-empty{padding-top:8px}
+
 /* ============================== Classwork editor (phase 3) ============================== */
 .ed-bar{min-height:74px}
 .filled.err{border-bottom-color:var(--err)}
@@ -861,7 +877,7 @@ function seed(){
      topicsCreated:0,topicsRenamed:0,topicsRemoved:0,
      assignmentsCreated:0,createdFiled:0,createdUnfiled:0,assignmentsEdited:0,assignmentsMoved:0,assignmentsRemoved:0,
      nudgeShown:false,
-     invitesSent:0,invitesCancelled:0,studentsAdded:0,studentsRemoved:0,codeRegenerations:0};
+     invitesSent:0,invitesCancelled:0,studentsInvited:0,invitesAccepted:0,studentsAdded:0,studentsRemoved:0,codeRegenerations:0};
   UI={view:"role",tab:"stream",composerOpen:false,draft:"",editingPost:null,editDraft:"",nudgeVisible:false,
       enrolledOpen:true,teachingOpen:true,self:{},transfer:"",placeholder:null,homeView:"teaching"};
   A=null;
@@ -1529,27 +1545,70 @@ function renderGrades(p){
    ====================================================================== */
 const LA=["#1E8E3E","#8E24AA","#E8710A","#1967D2","#D01884","#12848F","#5F6368"];
 const laColor=n=>{let h=0;for(const c of n)h=(h*31+c.charCodeAt(0))%997;return LA[h%LA.length]};
+const CONTACTS=[["Ada Okafor","ada.okafor@example.com"],["Chidi Nwosu","chidi.nwosu@example.com"],["Amina Bello","amina.bello@example.com"],
+  ["Tobi Adeyemi","tobi.adeyemi@example.com"],["Ngozi Eze","ngozi.eze@example.com"],["Emeka Obi","emeka.obi@example.com"],
+  ["Fatima Sani","fatima.sani@example.com"],["Kelechi Umeh","kelechi.umeh@example.com"]];
 function renderPeople(p){
-  const n=A.students.length;
+  const n=A.students.length,active=A.students.filter(s=>s.status!=="invited").length;
+  const srow=s=>`<div class="prow"><span class="la" style="background:${laColor(s.name)}" aria-hidden="true">${esc(s.name.trim()[0].toUpperCase())}</span>
+     <div class="n">${esc(s.name)}<small>${s.status==="invited"?"Invited · hasn't joined yet":(s.placeholder?"Fictional placeholder student":"Fictional student added by you")}</small></div>
+     ${s.status==="invited"?`<span class="badge b-pending">${I("schedule")}Invited</span>`:`<span class="badge b-active">${I("check")}Active</span>`}
+     ${owner()?`<button class="ib" data-student-menu="${s.id}" aria-haspopup="menu" aria-expanded="false" aria-label="Options for ${esc(s.name)}">${I("more_vert")}</button>`:""}</div>`;
   p.innerHTML=`<section aria-labelledby="tH"><div class="ph"><h2 id="tH">Teachers</h2>${owner()?`<button class="ib" id="inviteBtn" aria-label="Invite teachers" style="color:var(--pri)">${I("person_add")}</button>`:""}</div>
-   ${A.teachers.map(t=>t.status==="owner"?`<div class="prow"><span class="la" style="background:#5C6BC0" aria-hidden="true">Y</span><div class="n">You<small>Class owner · can't be removed</small></div><span class="badge b-owner">${I("key")}Owner</span><span style="width:44px" aria-hidden="true"></span></div>`
+   ${A.teachers.map(t=>t.status==="owner"?`<div class="prow"><span class="la" style="background:#5C6BC0" aria-hidden="true">${esc((t.name||"You").trim()[0].toUpperCase())}</span><div class="n">${esc(t.name||"You")}<small>Class owner · can't be removed</small></div><span class="badge b-owner">${I("key")}Owner</span><span style="width:44px" aria-hidden="true"></span></div>`
      :`<div class="prow"><span class="la" style="background:#9AA0A6" aria-hidden="true">${esc(t.email[0].toUpperCase())}</span><div class="n">${esc(t.email)}<small>Co-teacher · invitation not accepted yet</small></div><span class="badge b-pending">${I("schedule")}Pending</span>
        <button class="ib" data-teacher-menu="${t.id}" aria-haspopup="menu" aria-expanded="false" aria-label="Options for ${esc(t.email)}">${I("more_vert")}</button></div>`).join("")}
   </section>
-  <section aria-labelledby="sH" style="margin-top:24px"><div class="ph"><h2 id="sH">Students</h2><span class="count" id="headcount" aria-live="off">${plural(n,"student")}</span>${owner()?`<button class="ib" id="addStudentBtn" aria-label="Add practice student" style="color:var(--pri)">${I("person_add")}</button>`:""}</div>
-   ${n?A.students.map(s=>`<div class="prow"><span class="la" style="background:${laColor(s.name)}" aria-hidden="true">${esc(s.name.trim()[0].toUpperCase())}</span><div class="n">${esc(s.name)}<small>${s.placeholder?"Fictional placeholder student":"Fictional student added by you"}</small></div><span class="badge b-active">${I("check")}Active</span>
-     ${owner()?`<button class="ib" data-student-menu="${s.id}" aria-haspopup="menu" aria-expanded="false" aria-label="Options for ${esc(s.name)}">${I("more_vert")}</button>`:""}</div>`).join("")
-     :`<div class="empty-t">No students yet. Add a practice student to see the roster change.</div>`}
+  <section aria-labelledby="sH" style="margin-top:24px"><div class="ph"><h2 id="sH">Students</h2><span class="count" id="headcount" aria-live="off">${plural(n,"student")}</span>
+   ${owner()?`<button class="ib" id="inviteStudentsBtn" aria-label="Invite students" style="color:var(--pri)">${I("person_add")}</button>
+     <button class="ib" id="addStudentBtn" aria-label="Add practice student" style="color:var(--pri)">${I("person")}</button>`:""}</div>
+   ${n?A.students.map(srow).join("")
+     :`<div class="cw-empty people-empty">${EMPTY_PEOPLE}<b>Add students to this class</b>
+        ${owner()?`<div style="margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="fb" id="peopleInvite">${I("person_add")}Invite students</button>
+        <button class="ob" id="peopleAdd">${I("person")}Add practice student</button></div>`:"<span>Your teacher adds people to this class.</span>"}</div>`}
   </section>
   <section class="codecard" aria-labelledby="pcH"><span class="lbl" id="pcH">Class code</span><span class="codebig" id="peopleCode">${esc(A.code)}</span>
    ${owner()?`<span class="simtag">${I("science")}Practice shortcut</span><button class="ob" id="regenBtn">${I("autorenew")}Regenerate code</button>`:""}</section>`;
   const ib=$("#inviteBtn");if(ib)ib.onclick=()=>openInvite(ib);
-  const ab=$("#addStudentBtn");if(ab)ab.onclick=()=>openAddStudent(ab);
+  [["#inviteStudentsBtn","invite"],["#peopleInvite","invite"],["#addStudentBtn","add"],["#peopleAdd","add"]].forEach(([sel,kind])=>{
+    const b=$(sel);if(b)b.onclick=()=>kind==="invite"?inviteStudents(b):openAddStudent(b)});
   const rb=$("#regenBtn");if(rb)rb.onclick=()=>regenerate(rb);
   $$("[data-teacher-menu]").forEach(b=>b.onclick=e=>{e.stopPropagation();const t=A.teachers.find(x=>x.id===b.dataset.teacherMenu);
     openMenu(b,[{icon:"close",label:"Cancel invitation",fn:()=>{A.teachers=A.teachers.filter(x=>x!==t);L.invitesCancelled++;renderPeople(p);$("#inviteBtn").focus();snack(`Invitation for ${t.email} cancelled.`)}}],{alignRight:true})});
   if(owner())$$("[data-student-menu]").forEach(b=>b.onclick=e=>{e.stopPropagation();const s=A.students.find(x=>x.id===b.dataset.studentMenu);
-    openMenu(b,[{icon:"person_remove",label:"Remove",fn:()=>{A.students=A.students.filter(x=>x!==s);L.studentsRemoved++;renderPeople(p);$("#addStudentBtn").focus();snack(`Removed ${s.name}. ${plural(A.students.length,"student")} in ${A.name}.`);emit("student:removed")}}],{alignRight:true})});
+    const items=[];
+    if(s.status==="invited")items.push({icon:"check",label:"Accept invitation (practice)",fn:()=>{s.status="active";L.invitesAccepted++;renderPeople(p);snack(`${s.name} joined ${A.name}.`);emit("student:accepted")}});
+    items.push({icon:"person_remove",label:"Remove",fn:()=>{A.students=A.students.filter(x=>x!==s);L.studentsRemoved++;renderPeople(p);const f=$("#addStudentBtn")||$("#peopleAdd");f&&f.focus();snack(`Removed ${s.name}. ${plural(A.students.length,"student")} in ${A.name}.`);emit("student:removed")}});
+    openMenu(b,items,{alignRight:true})});
+}
+/* Invite students: the invite link, a searchable contact list, Invite disabled until someone is picked (SPEC §6.8).
+   No mail leaves the sandbox — invited people sit as Invited until accepted, as they would in the real product. */
+function inviteStudents(trigger){
+  const picked=new Set();
+  cDialog(`<h2 id="cdT">Invite students</h2>
+   <div class="invlink"><div class="k">Invite link</div>
+     <div class="row"><span class="url" id="invUrl">https://classroom.google.com/c/${esc(A.id)}?cjc=${esc(A.code)}</span>
+     <button class="ib" id="invCopy" aria-label="Copy invite link">${I("content_copy")}</button></div></div>
+   <div class="field of srch"><input id="invSearch" autocomplete="off" placeholder=" " aria-describedby="invCount"><label for="invSearch">Type a name or email</label>${I("search","dd")}</div>
+   <div class="contacts" id="invList" role="group" aria-label="Contacts"></div>
+   <p class="sr" id="invCount" aria-live="polite">No one selected</p>
+   <div class="acts"><button class="tb" data-close>Cancel</button><button class="tb" id="invGo" disabled>Invite</button></div>`,
+  (d,close)=>{const list=d.querySelector("#invList"),go=d.querySelector("#invGo"),count=d.querySelector("#invCount");
+    const taken=new Set(A.students.map(s=>s.name));
+    const draw=(q="")=>{const rows=CONTACTS.filter(([n,e])=>!taken.has(n)&&(n+e).toLowerCase().includes(q.toLowerCase()));
+      list.innerHTML=rows.length?rows.map(([n,e])=>`<label class="contact"><input type="checkbox" value="${esc(n)}" data-email="${esc(e)}" ${picked.has(n)?"checked":""}>
+        <span class="la" style="background:${laColor(n)}" aria-hidden="true">${esc(n[0])}</span><span class="n">${esc(n)}<small>${esc(e)}</small></span></label>`).join("")
+        :`<p class="none">No contacts match “${esc(q)}”.</p>`;
+      list.querySelectorAll("input").forEach(i=>i.onchange=()=>{i.checked?picked.add(i.value):picked.delete(i.value);
+        go.disabled=!picked.size;count.textContent=picked.size?`${plural(picked.size,"person","people")} selected`:"No one selected"})};
+    draw();
+    d.querySelector("#invSearch").oninput=e=>draw(e.target.value.trim());
+    d.querySelector("#invCopy").onclick=()=>snack("Invite link copied (simulated).");
+    go.onclick=()=>{picked.forEach(n=>{const c=CONTACTS.find(x=>x[0]===n);
+      A.students.push({id:nid("u"),name:n,email:c?c[1]:"",placeholder:false,status:"invited"})});
+      L.studentsInvited+=picked.size;close(true);renderPanel();
+      snack(`${plural(picked.size,"invitation")} sent (simulated). They stay Invited until they join.`);emit("students:invited")}},trigger);
+  emit("invite:students");
 }
 function regenerate(trigger){
   const prev=A.code;A.code=genCode(prev);L.codeRegenerations++;
@@ -1948,7 +2007,7 @@ function openSummary(){
       <dt class="grp">Class</dt><dt>Name</dt><dd>${esc(K.name)}</dd>${K.section?`<dt>Section</dt><dd>${esc(K.section)}</dd>`:""}<dt>Your role</dt><dd>${K.role==="owner"?"Teacher (owner)":"Student"}</dd>
       <dt class="grp">Stream</dt><dt>Posts remaining</dt><dd>${K.posts.length}</dd>
       <dt class="grp">Classwork</dt><dt>Topics</dt><dd>${K.topics.length}</dd><dt>Assignments</dt><dd>${K.assignments.length}</dd><dt>Filed under a topic</dt><dd>${filed}</dd><dt>No topic (unfiled)</dt><dd>${unf}</dd>
-      <dt class="grp">People</dt><dt>Teachers</dt><dd>${K.teachers.filter(t=>t.status==="owner").length} owner${pend?`, ${pend} pending`:""}</dd><dt>Students</dt><dd>${K.students.length}</dd><dt>Class code</dt><dd style="letter-spacing:.06em">${esc(K.code)}</dd>
+      <dt class="grp">People</dt><dt>Teachers</dt><dd>${K.teachers.filter(t=>t.status==="owner").length} owner${pend?`, ${pend} pending`:""}</dd><dt>Students</dt><dd>${K.students.filter(x=>x.status!=="invited").length} active${K.students.filter(x=>x.status==="invited").length?`, ${K.students.filter(x=>x.status==="invited").length} invited`:""}</dd><dt>Class code</dt><dd style="letter-spacing:.06em">${esc(K.code)}</dd>
      </dl>`:""}
      ${K&&(K.topics.length||unf)?`<ul class="tree" aria-label="Classwork structure">${unf?`<li>No topic (${unf})</li>`:""}${K.topics.map(t=>{const a=K.assignments.filter(x=>x.topicId===t.id);return `<li>${esc(t.name)} (${a.length})${a.length?`<ul>${a.map(x=>`<li>${esc(x.title)}</li>`).join("")}</ul>`:""}</li>`}).join("")}</ul>`:""}
     </section>
@@ -1957,7 +2016,7 @@ function openSummary(){
       <dt class="grp">Setting up</dt><dt>Role chosen</dt><dd>${L.role?L.role[0].toUpperCase()+L.role.slice(1):"None"}</dd><dt>Classes created</dt><dd>${L.classesCreated}</dd>${L.classesJoined?`<dt>Classes joined</dt><dd>${L.classesJoined}</dd>`:""}
       <dt class="grp">Stream</dt><dt>Posts created</dt><dd>${L.postsCreated}</dd><dt>Posts edited</dt><dd>${L.postsEdited}</dd><dt>Posts deleted</dt><dd>${L.postsRemoved}</dd>
       <dt class="grp">Classwork</dt><dt>Topics created</dt><dd>${L.topicsCreated}</dd><dt>Assignments created</dt><dd>${L.assignmentsCreated}</dd><dt>…filed when created</dt><dd>${L.createdFiled}</dd><dt>…left unfiled</dt><dd>${L.createdUnfiled}</dd><dt>Assignments moved or edited</dt><dd>${L.assignmentsMoved+L.assignmentsEdited}</dd><dt>“Getting crowded?” note</dt><dd>${L.nudgeShown?"Shown":"Not shown"}</dd>
-      <dt class="grp">People</dt><dt>Co-teacher invitations</dt><dd>${L.invitesSent}</dd><dt>Students added / removed</dt><dd>${L.studentsAdded} / ${L.studentsRemoved}</dd><dt>Class code regenerated</dt><dd>${L.codeRegenerations}</dd>
+      <dt class="grp">People</dt><dt>Co-teacher invitations</dt><dd>${L.invitesSent}</dd><dt>Students invited</dt><dd>${L.studentsInvited}</dd><dt>Invitations accepted</dt><dd>${L.invitesAccepted}</dd><dt>Students added / removed</dt><dd>${L.studentsAdded} / ${L.studentsRemoved}</dd><dt>Class code regenerated</dt><dd>${L.codeRegenerations}</dd>
       <dt class="grp">Tabs</dt><dt>Tabs opened</dt><dd>${L.tabsVisited.length?L.tabsVisited.map(t=>TABS.find(x=>x[0]===t)[1]).join(", "):"None"}</dd>
      </dl></section>
    </div>

@@ -41,7 +41,8 @@ Miva Open University · Interactive and Immersive Learning Team.
 
 **Simplified practice actions** are marked with a dashed gold "Practice shortcut" or "Simplified for practice" tag in the interface:
 
-- **Adding a student:** students become Active immediately. In Classroom they join by invitation, invite link or class code.
+- **Invite students** works as in the product: the invite link, a searchable contact list, and invited people sitting as **Invited** until they join. Accepting on their behalf is a practice shortcut, since nobody can accept inside a sandbox.
+- **Adding a practice student** (the `Add practice student` shortcut) still puts someone straight in as Active, for when the point is the roster rather than the invitation.
 - **Regenerating the class code** from the People tab. In Classroom this is done from the Stream class code card, which is also supported here.
 - **Moving an assignment** to a topic through a menu item. In Classroom you edit the assignment's topic instead, which also works here.
 - **Co-teacher invitations** never send email and stay Pending.
@@ -80,7 +81,7 @@ Miva Open University · Interactive and Immersive Learning Team.
 
 ## Verification
 
-The suite has **121** checks (51 original, 9 for the tab intro cards, 2 for assignment-edit logging, 7 for the opener and the walkthrough handover). The opener checks follow the sign-off list in `source/brand/OPENER.md`: no two logos overlap at any sampled frame, each stage settles centred, all three fit at 375px with no sideways scroll, the motif stays at 0.7, each logo keeps its institution's alt text, Begin takes focus, and reduced motion shows the finished frame (`source/test/verify.py`), plus a player check. They cover:
+The suite has **129** checks (51 original, 9 for the tab intro cards, 2 for assignment-edit logging, 7 for the opener and the walkthrough handover). The opener checks follow the sign-off list in `source/brand/OPENER.md`: no two logos overlap at any sampled frame, each stage settles centred, all three fit at 375px with no sideways scroll, the motif stays at 0.7, each logo keeps its institution's alt text, Begin takes focus, and reduced motion shows the finished frame (`source/test/verify.py`), plus a player check. They cover:
 
 - seeded state
 - empty and whitespace-only input blocked everywhere
