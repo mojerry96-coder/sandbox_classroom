@@ -29,7 +29,7 @@ const nid=p=>p+(++seq);
 function seed(){
   seq=0;
   /* Nothing is set up in advance: the learner picks a role, then creates (or joins) the class. */
-  S={user:{role:null,name:"You"},classes:[],activeId:null,flags:{unfiledNudgeShown:false,gateSeen:false}};
+  S={user:{role:null,name:"You"},classes:[],activeId:null,flags:{unfiledNudgeShown:false,gateSeen:false,promoSeen:false}};
   L={role:null,classesCreated:0,classesJoined:0,
      tabsVisited:[],tabOpens:{stream:0,classwork:0,people:0,grades:0},
      postsCreated:0,postsEdited:0,postsRemoved:0,
@@ -468,7 +468,7 @@ function postCard(post,fresh){
     if(A.streamClasswork==="hidden")return "";
     if(A.streamClasswork==="condensed")return `<article class="cpost ${fresh?"fresh":""}" data-post="${post.id}">
       <span class="icon" aria-hidden="true">${I("assignment")}</span>
-      <div class="meta"><div class="who">${esc(post.author)} posted a new assignment: ${esc(post.text)}</div><div class="when">${esc(post.when)}</div></div>
+      <div class="meta"><div class="who">${esc(post.author)} posted a new ${esc((WORK[post.workType]||WORK.assignment).label.toLowerCase())}: ${esc(post.text)}</div><div class="when">${esc(post.when)}</div></div>
       <button class="ib" data-post-menu="${post.id}" aria-haspopup="menu" aria-expanded="false" aria-label="Options for ${esc(post.text)}">${I("more_vert")}</button></article>`;
   }
   return fullPostCard(post,fresh);
@@ -498,21 +498,28 @@ function renderClasswork(p){
    ${A.topics.map(t=>{const its=inTopic(t.id);return `<section class="topic" aria-labelledby="h-${t.id}" data-topic="${t.id}"><div class="thead"><h2 id="h-${t.id}">${esc(t.name)}</h2><span class="tcount">${plural(its.length,"item")}</span>
      <button class="ib" data-topic-menu="${t.id}" aria-haspopup="menu" aria-expanded="false" aria-label="Topic options for ${esc(t.name)}">${I("more_vert")}</button></div>
      ${its.length?its.map(rowHTML).join(""):`<div class="empty-t">No work in this topic yet</div>`}</section>`}).join("")}`;
-  const cb=$("#createBtn");if(cb)cb.onclick=e=>{e.stopPropagation();openMenu($("#createBtn"),[{icon:"assignment",label:"Assignment",id:"mAssignment",fn:()=>openAssignmentEditor(null,$("#createBtn"))},"-",{icon:"topic",label:"Topic",id:"mTopic",fn:()=>openTopicDialog(null,$("#createBtn"))}]);emit("create:open")};
+  const cb=$("#createBtn");if(cb)cb.onclick=e=>{e.stopPropagation();openMenu($("#createBtn"),[
+    {icon:"assignment",label:"Assignment",id:"mAssignment",fn:()=>openEditor("assignment",null,$("#createBtn"))},
+    {icon:"assignment",label:"Quiz assignment",id:"mQuiz",fn:()=>openEditor("quiz",null,$("#createBtn"))},
+    {icon:"live_help",label:"Question",id:"mQuestion",fn:()=>openEditor("question",null,$("#createBtn"))},
+    {icon:"book",label:"Material",id:"mMaterial",fn:()=>openEditor("material",null,$("#createBtn"))},
+    {icon:"content_paste_go",label:"Reuse post",id:"mReuse",fn:()=>reusePost($("#createBtn"))},
+    "-",
+    {icon:"topic",label:"Topic",id:"mTopic",fn:()=>openTopicDialog(null,$("#createBtn"))}],{wide:true});emit("create:open")};
   const nb=$("#nudgeOk");if(nb)nb.onclick=()=>{UI.nudgeVisible=false;renderClasswork(p);$("#createBtn").focus()};
   $$("[data-topic-menu]").forEach(b=>b.onclick=e=>{e.stopPropagation();const t=A.topics.find(x=>x.id===b.dataset.topicMenu);
     openMenu(b,[{icon:"edit",label:"Rename",fn:()=>openTopicDialog(t,b)},{icon:"delete",label:"Delete",fn:()=>confirmDeleteTopic(t,b)}],{alignRight:true})});
   $$("[data-item-menu]").forEach(b=>b.onclick=e=>{e.stopPropagation();const a=A.assignments.find(x=>x.id===b.dataset.itemMenu);
-    openMenu(b,[{icon:"edit",label:"Edit",fn:()=>openAssignmentEditor(a,b)},{icon:"drive_file_move",label:"Move to topic",id:"mMove",fn:()=>openMoveDialog(a,b)},{icon:"delete",label:"Delete",fn:()=>{A.assignments=A.assignments.filter(x=>x!==a);L.assignmentsRemoved++;renderClasswork(p);$("#createBtn").focus();snack(`Assignment “${excerpt(a.title,30)}” deleted.`);emit("assign:removed")}}],{alignRight:true});emit("itemmenu:open")});
+    openMenu(b,[{icon:"edit",label:"Edit",fn:()=>openEditor(a.type||"assignment",a,b)},{icon:"drive_file_move",label:"Move to topic",id:"mMove",fn:()=>openMoveDialog(a,b)},{icon:"delete",label:"Delete",fn:()=>{A.assignments=A.assignments.filter(x=>x!==a);L.assignmentsRemoved++;renderClasswork(p);$("#createBtn").focus();snack(`Assignment “${excerpt(a.title,30)}” deleted.`);emit("assign:removed")}}],{alignRight:true});emit("itemmenu:open")});
 }
-function rowHTML(a){return `<div class="row" data-item="${a.id}"><span class="icon" aria-hidden="true">${I("assignment")}</span><span class="t">${esc(a.title)}</span><span class="d">${a.edited?"Edited":"Posted"} just now</span>
+function rowHTML(a){const w=workOf(a);return `<div class="row" data-item="${a.id}"><span class="icon" aria-hidden="true">${I(w.icon)}</span><span class="t">${esc(a.title)}</span><span class="d">${a.edited?"Edited":"Posted"} just now</span>
   <button class="ib" data-item-menu="${a.id}" aria-haspopup="menu" aria-expanded="false" aria-label="Options for assignment ${esc(excerpt(a.title))}">${I("more_vert")}</button></div>`}
 const EMPTY_CW=`<svg width="240" height="150" viewBox="0 0 240 150" aria-hidden="true"><rect x="40" y="20" width="160" height="110" rx="10" fill="#E9EEF6"/><rect x="58" y="38" width="80" height="10" rx="5" fill="#A8C7FA"/><rect x="58" y="60" width="124" height="8" rx="4" fill="#fff"/><rect x="58" y="76" width="124" height="8" rx="4" fill="#fff"/><rect x="58" y="92" width="90" height="8" rx="4" fill="#fff"/><circle cx="186" cy="118" r="20" fill="#0B57D0"/><path d="M186 108v20M176 118h20" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>`;
 
 function maybeNudge(){
   if(unfiled().length>=2&&!S.flags.unfiledNudgeShown){S.flags.unfiledNudgeShown=true;L.nudgeShown=true;UI.nudgeVisible=true;return true}
   return false}
-function openTopicDialog(topic,trigger){
+function openTopicDialog(topic,trigger,after){
   cDialog(`<h2 id="cdT">${topic?"Rename topic":"Add topic"}</h2>
    <form id="tForm" novalidate><div class="field of"><input id="topicName" autocomplete="off" maxlength="100" value="${topic?esc(topic.name):""}" aria-describedby="topicHelp"><label for="topicName">Topic</label></div>
    <div class="help" id="topicHelp">Required</div>
@@ -521,7 +528,9 @@ function openTopicDialog(topic,trigger){
     i.oninput=()=>{b.disabled=!i.value.trim();if(i.value.trim())emit("topic:text")};
     d.querySelector("#tForm").onsubmit=e=>{e.preventDefault();const n=i.value.trim();if(!n)return;
       if(topic){topic.name=n;L.topicsRenamed++;close();renderPanel();snack(`Topic renamed to “${excerpt(n,30)}”.`);$("#createBtn").focus();return}
-      const t={id:nid("topic-"),name:n};A.topics.unshift(t);L.topicsCreated++;close();renderPanel();$("#createBtn").focus();snack(`Topic “${excerpt(n,30)}” created.`);emit("topic:created")}},trigger,()=>emit("topic:cancel"));
+      const t={id:nid("topic-"),name:n};A.topics.unshift(t);L.topicsCreated++;close();
+      if(after){after(t);snack(`Topic “${excerpt(n,30)}” created.`);emit("topic:created");return}
+      renderPanel();$("#createBtn").focus();snack(`Topic “${excerpt(n,30)}” created.`);emit("topic:created")}},trigger,()=>emit("topic:cancel"));
   emit("topic:dialog");
 }
 function confirmDeleteTopic(t,trigger){const n=inTopic(t.id).length;
@@ -543,49 +552,132 @@ function openMoveDialog(a,trigger){
   emit("move:dialog")}
 
 /* Assignment editor (full-screen, mirrors Classroom's editor; provisional fidelity) */
-function openAssignmentEditor(a,trigger){
+const WORK={assignment:{label:"Assignment",icon:"assignment",points:true,due:true,rubric:true},
+  quiz:{label:"Quiz assignment",icon:"assignment",points:true,due:true,rubric:true,quiz:true},
+  question:{label:"Question",icon:"live_help",points:true,due:true,question:true},
+  material:{label:"Material",icon:"book",points:false,due:false}};
+const workOf=a=>WORK[a&&a.type||"assignment"]||WORK.assignment;
+/* The classwork editor: full screen, two outlined cards on the left, 395px rail on the right.
+   The title field opens in its error state — that is the real product's behaviour (SPEC §6.7). */
+function openEditor(type,a,trigger){
   closeMenus();
+  const W=WORK[type]||WORK.assignment;
   const ed=document.createElement("div");ed.className="editor";ed.setAttribute("role","dialog");ed.setAttribute("aria-modal","true");ed.setAttribute("aria-labelledby","edT");
+  const pts=a?a.points:(W.points?100:null);
   ed.innerHTML=`<form id="aForm" style="display:contents" novalidate>
-   <div class="ed-bar"><button type="button" class="ib" id="edClose" aria-label="Close">${I("close")}</button><span class="ic" aria-hidden="true">${I("assignment")}</span><h2 id="edT">Assignment</h2>
-    <button class="fb" id="aAssign" ${a?"":"disabled"}>${a?"Save":"Assign"}</button></div>
-   <div class="ed-body"><div class="ed-main"><div class="ed-card">
-     <div class="filled"><label for="aTitle">Title*</label><input id="aTitle" autocomplete="off" maxlength="150" value="${a?esc(a.title):""}" aria-required="true" aria-describedby="aTitleHelp"></div>
-     <div class="help" id="aTitleHelp">*Required</div>
-     <div class="filled"><label for="aInstr">Instructions (optional)</label><textarea id="aInstr">${a?esc(a.instructions||""):""}</textarea></div>
-   </div></div>
-   <aside class="ed-side" aria-label="Assignment details">
+   <div class="ed-bar"><button type="button" class="ib" id="edClose" aria-label="Close dialog">${I("close")}</button><span class="ic" aria-hidden="true">${I(W.icon)}</span><h2 id="edT">${W.label}</h2>
+    <span class="split"><button class="fb" id="aAssign" ${a?"":"disabled"}>${a?"Save":"Assign"}</button>
+    <button class="fb caret" id="aMore" aria-haspopup="menu" aria-expanded="false" aria-label="Assign options" ${a?"":"disabled"}>${I("arrow_drop_down")}</button></span></div>
+   <div class="ed-body"><div class="ed-main">
+     <div class="ed-card">
+      <div class="filled err" id="titleWrap"><label for="aTitle">${W.question?"Question":"Title"}*</label><input id="aTitle" autocomplete="off" maxlength="150" value="${a?esc(a.title):""}" aria-required="true" aria-invalid="${a?"false":"true"}" aria-describedby="aTitleHelp"></div>
+      <div class="help err" id="aTitleHelp">*Required</div>
+      <div class="filled"><label for="aInstr">${W.question?"Instructions (optional)":(type==="material"?"Description (optional)":"Instructions (optional)")}</label><textarea id="aInstr">${a?esc(a.instructions||""):""}</textarea>
+        <div class="rtbar" role="toolbar" aria-label="Text formatting">${[["format_bold","Bold"],["format_italic","Italic"],["format_underlined","Underline"],["format_list_bulleted","Bulleted list"],["format_clear","Remove formatting"]].map(([ic,l])=>`<button type="button" class="ib" aria-label="${l}" data-rt="${l}">${I(ic)}</button>`).join("")}</div></div>
+      ${W.question?`<div class="qopts"><div class="field of"><select id="qType" aria-label="Answer type"><option>Short answer</option><option>Multiple choice</option></select>${I("arrow_drop_down","dd")}</div>
+        <label class="cbrow"><input type="checkbox" id="qReply" checked><span>Students can reply to each other</span></label>
+        <label class="cbrow"><input type="checkbox" id="qEdit" checked><span>Students can edit answer</span></label></div>`:""}
+      ${W.quiz?`<div class="quizrow">${I("assignment")}<div><b>Blank Quiz</b><span>Google Forms · attached automatically</span></div>
+        <label class="cbrow"><input type="checkbox" id="qImport"><span>Grade importing</span></label></div>`:""}
+     </div>
+     <div class="ed-card attach">
+      <h3>Attach</h3>
+      <div class="attach5">
+       ${[["add_to_drive","Drive","Add Google Drive file"],["smart_display","YouTube","Add YouTube video"],["add","Create","Create new attachment"],["upload","Upload","Upload file"],["link","Link","Add link"]]
+         .map(([ic,l,al])=>`<button type="button" class="att5" data-att="${l}" aria-label="${al}"><span class="c">${I(ic)}</span><span class="l">${l}</span></button>`).join("")}
+      </div></div>
+   </div>
+   <aside class="ed-side" aria-label="${W.label} details">
      <div class="st"><div class="k">For</div><div class="v">${esc(A.name)}${I("arrow_drop_down")}</div></div>
-     <div class="st"><div class="k">Assign to</div><div class="v">All students${I("arrow_drop_down")}</div></div>
-     <div class="st"><div class="k">Points</div><div class="v">100${I("arrow_drop_down")}</div></div>
-     <div class="st"><div class="k">Due</div><div class="v">No due date${I("arrow_drop_down")}</div></div>
-     <div><div class="st"><div class="k" id="aTopicK">Topic</div></div><div class="field of" style="margin:0"><select id="aTopic" aria-labelledby="aTopicK">${topicOptions(a?a.topicId:null)}</select>${I("arrow_drop_down","dd")}</div>
-      ${A.topics.length?"":`<div class="help" style="margin-left:0;margin-top:8px">No topics yet. Create one from Create › Topic.</div>`}</div>
+     <div class="st"><div class="k">Assign to</div><button type="button" class="ob" id="aAssignTo">${I("group")}All students</button></div>
+     ${W.points!==false?`<div class="st"><div class="k"><label for="aPoints">Points</label></div>
+       <div class="ptsrow"><input id="aPoints" class="pts" value="${pts===null?"Ungraded":pts}" aria-describedby="ptsHint">
+       <button type="button" class="ib" id="ptsMenu" aria-label="Points options" aria-haspopup="menu" aria-expanded="false">${I("arrow_drop_down")}</button></div><span class="sr" id="ptsHint">Type a number, or choose Ungraded.</span></div>`:""}
+     ${W.due?`<div class="st"><div class="k">Due</div><button type="button" class="selbtn" id="aDue">${a&&a.due?esc(a.due):"No due date"}${I("arrow_drop_down")}</button></div>`:""}
+     <div class="st"><div class="k"><label for="aTopic">Topic</label></div><div class="field of" style="margin:0"><select id="aTopic">${topicOptions(a?a.topicId:null)}<option value="__new">Create topic</option></select>${I("arrow_drop_down","dd")}</div></div>
+     ${W.rubric?`<div class="st"><button type="button" class="tonalbtn" id="aRubric">${I("add")}Rubric</button></div>`:""}
    </aside></div></form>`;
   document.body.appendChild(ed);
-  const ti=ed.querySelector("#aTitle"),as=ed.querySelector("#aAssign"),sel=ed.querySelector("#aTopic");
+  const ti=ed.querySelector("#aTitle"),as=ed.querySelector("#aAssign"),more=ed.querySelector("#aMore"),sel=ed.querySelector("#aTopic");
+  let due=a&&a.due||"",points=pts;
   ti.focus();
   const close=(done)=>{ed.remove();document.removeEventListener("keydown",esck,true);if(trigger&&document.body.contains(trigger))trigger.focus();else($("#createBtn")||$("#main")).focus();if(!done)emit("assign:cancel")};
-  const esck=e=>{if(e.key==="Escape"&&!document.querySelector(".menu")){e.stopPropagation();close()}};document.addEventListener("keydown",esck,true);
-  trapFocus(ed);
+  const esck=e=>{if(e.key==="Escape"&&!document.querySelector(".menu")&&!document.querySelector(".scrim")){e.stopPropagation();close()}};
+  document.addEventListener("keydown",esck,true);trapFocus(ed);
   ed.querySelector("#edClose").onclick=()=>close();
-  ti.oninput=()=>{as.disabled=!ti.value.trim();if(ti.value.trim())emit("assign:title")};
-  sel.onchange=()=>emit("assign:topic");
-  ed.querySelector("#aForm").onsubmit=e=>{e.preventDefault();const title=ti.value.trim();if(!title){ti.focus();return}
-    const topicId=sel.value||null,instructions=ed.querySelector("#aInstr").value;
-    /* One commit is one logged action: an edit that also changes the topic counts as an edit only,
-       so the summary's "moved or edited" total never double-counts it. */
-    if(a){a.title=title;a.instructions=instructions;a.topicId=topicId;a.edited=true;L.assignmentsEdited++}
-    else{A.assignments.unshift({id:nid("asg-"),title,instructions,topicId,edited:false});L.assignmentsCreated++;topicId?L.createdFiled++:L.createdUnfiled++;
-      A.posts.unshift({id:nid("post-"),author:"You",when:"Just now",edited:false,protected:true,text:title,kind:"classwork"})}
+  const sync=()=>{const ok=!!ti.value.trim();as.disabled=!ok;more.disabled=!ok;
+    ed.querySelector("#titleWrap").classList.toggle("err",!ok);ed.querySelector("#aTitleHelp").classList.toggle("err",!ok);
+    ti.setAttribute("aria-invalid",ok?"false":"true");if(ok)emit("assign:title")};
+  ti.oninput=sync;
+  sel.onchange=()=>{if(sel.value==="__new"){sel.value="";openTopicDialog(null,sel,t=>{renderTopicOptions(sel,t.id)})}emit("assign:topic")};
+  ed.querySelectorAll("[data-rt]").forEach(b=>b.onclick=()=>snack(`${b.dataset.rt} isn't part of this practice.`));
+  ed.querySelectorAll("[data-att]").forEach(b=>b.onclick=e=>{const l=b.dataset.att;
+    if(l==="Create")return openMenu(e.currentTarget,[["Docs","description"],["Slides","slideshow"],["Sheets","grid_on"],["Drawings","draw"],["Forms","checklist"],["Vids","smart_display"]]
+      .map(([n,ic])=>({icon:"description",label:n==="Vids"?"Vids · New":n,fn:()=>snack(`${n} attachments aren't part of this practice.`)})));
+    snack(`${l} attachments aren't part of this practice.`)});
+  const at=ed.querySelector("#aAssignTo");if(at)at.onclick=()=>announceTo(at);
+  const rb=ed.querySelector("#aRubric");if(rb)rb.onclick=()=>snack("Rubrics aren't part of this practice.");
+  const pm=ed.querySelector("#ptsMenu");
+  if(pm)pm.onclick=e=>{e.stopPropagation();openMenu(e.currentTarget,[{label:"Ungraded",fn:()=>{ed.querySelector("#aPoints").value="Ungraded"}}],{alignRight:true})};
+  const db=ed.querySelector("#aDue");
+  if(db)db.onclick=e=>{e.stopPropagation();duePopover(e.currentTarget,due,v=>{due=v;db.innerHTML=(v||"No due date")+I("arrow_drop_down")})};
+  more.onclick=e=>{e.preventDefault();e.stopPropagation();openMenu(more,[
+    {label:a?"Save":"Assign",fn:()=>submit()},{label:"Schedule",fn:()=>snack("Scheduling isn't part of this practice.")},
+    {label:"Save draft",fn:()=>snack("Drafts aren't part of this practice.")}],{alignRight:true})};
+  const submit=()=>{const title=ti.value.trim();if(!title){ti.focus();sync();return}
+    const topicId=sel.value&&sel.value!=="__new"?sel.value:null,instructions=ed.querySelector("#aInstr").value;
+    const p=ed.querySelector("#aPoints");points=p?(p.value.trim().toLowerCase()==="ungraded"?null:(parseInt(p.value,10)||0)):null;
+    if(a){const moved=a.topicId!==topicId;a.title=title;a.instructions=instructions;a.topicId=topicId;a.points=points;a.due=due;a.edited=true;L.assignmentsEdited++}
+    else{A.assignments.unshift({id:nid("asg-"),type,title,instructions,topicId,points,due,edited:false});L.assignmentsCreated++;topicId?L.createdFiled++:L.createdUnfiled++;
+      A.posts.unshift({id:nid("post-"),author:"You",when:"Just now",edited:false,protected:true,text:title,kind:"classwork",workType:type})}
     const nud=maybeNudge();
     ed.remove();document.removeEventListener("keydown",esck,true);
     if(UI.view!=="class"||UI.tab!=="classwork"){UI.view="class";UI.tab="classwork"}
     renderPanel();$("#createBtn").focus();
     const tn=topicId?A.topics.find(t=>t.id===topicId).name:null;
-    snack(a?"Assignment updated.":tn?`Assignment filed under “${excerpt(tn,30)}”.`:"Assignment added to No topic.");
+    snack(a?`${W.label} updated.`:tn?`${W.label} filed under “${excerpt(tn,30)}”.`:`${W.label} added to No topic.`);
     if(nud)announceNudge();emit(a?"assign:edited":"assign:created")};
+  ed.querySelector("#aForm").onsubmit=e=>{e.preventDefault();submit()};
+  sync();
   emit("assign:editor");
+  if(!S.flags.promoSeen){S.flags.promoSeen=true;setTimeout(()=>firstRunPromo(ti),400)}
+}
+function renderTopicOptions(sel,pick){sel.innerHTML=topicOptions(pick)+'<option value="__new">Create topic</option>';sel.value=pick||""}
+function duePopover(anchor,value,onPick){
+  closeMenus();const m=document.createElement("div");m.className="menu due";m._anchor=anchor;
+  m.innerHTML=`<div class="duehd">Due date &amp; time</div>
+   <div class="field of duefield"><input id="dueDate" placeholder=" " autocomplete="off" value="${esc(value?value.split(" · ")[0]:"")}"><label for="dueDate">Due date</label>${I("calendar_today","dd")}</div>
+   <div class="help" id="dueHelp">MM/DD/YYYY</div>
+   <div class="field of duefield" id="timeWrap" hidden><input id="dueTime" placeholder=" " autocomplete="off"><label for="dueTime">Time</label></div>
+   <div class="acts"><button class="tb" id="dueClear">No due date</button><button class="tb" id="dueSave">Save</button></div>`;
+  document.body.appendChild(m);
+  const r=anchor.getBoundingClientRect();
+  m.style.left=Math.max(8,Math.min(r.left,document.documentElement.clientWidth-m.offsetWidth-8))+"px";
+  m.style.top=Math.min(r.bottom+4,innerHeight-m.offsetHeight-8)+"px";
+  anchor.setAttribute("aria-expanded","true");
+  const date=m.querySelector("#dueDate"),time=m.querySelector("#dueTime");
+  date.oninput=()=>{m.querySelector("#timeWrap").hidden=!date.value.trim()};
+  date.focus();
+  m.querySelector("#dueClear").onclick=()=>{closeMenus();onPick("")};
+  m.querySelector("#dueSave").onclick=()=>{const d=date.value.trim();closeMenus();onPick(d?(time.value.trim()?d+" · "+time.value.trim():d):"")};
+  trapFocus(m);
+}
+function firstRunPromo(back){
+  cDialog(`<h2 id="cdT">Schedule across multiple classes</h2>
+   <p>You can now define due dates, publish dates, and topics for classwork and announcements across multiple classes.</p>
+   <div class="acts"><button class="tb" data-close>Learn more</button><button class="tb" data-close>Close</button></div>`,
+   ()=>{},back);
+}
+function reusePost(trigger){
+  const posts=S.classes.flatMap(c=>c.posts.filter(p=>!p.protected).map(p=>({c,p})));
+  cDialog(`<h2 id="cdT">Reuse post</h2>
+   ${posts.length?`<div class="field of"><select id="rpPost" aria-label="Choose a post">${posts.map((x,i)=>`<option value="${i}">${esc(x.c.name)} — ${esc(excerpt(x.p.text,40))}</option>`).join("")}</select>${I("arrow_drop_down","dd")}</div>
+     <label class="cbrow"><input type="checkbox" checked><span>Create new copies of all attachments</span></label>`
+    :`<p>There are no earlier posts to reuse yet. Post an announcement first, then reuse it here.</p>`}
+   <div class="acts"><button class="tb" data-close>Cancel</button>${posts.length?`<button class="tb" id="rpGo">Reuse</button>`:""}</div>`,
+  (d,close)=>{const go=d.querySelector("#rpGo");if(go)go.onclick=()=>{const x=posts[+d.querySelector("#rpPost").value];
+    A.posts.unshift({id:nid("post-"),author:"You",when:"Just now",edited:false,protected:false,text:x.p.text,kind:"announcement"});
+    L.postsCreated++;close(true);setTab("stream");snack("Post reused.")}},trigger);
 }
 
 /* ======================================================================
@@ -676,6 +768,7 @@ function openMenu(anchor,items,opt={}){
   m.innerHTML=items.map((it,i)=>it==="-"?"<hr>":`<button role="menuitem" data-i="${i}" ${it.id?`id="${it.id}"`:""} tabindex="-1">${it.icon?I(it.icon):""}${esc(it.label)}</button>`).join("");
   document.body.appendChild(m);
   const r=anchor.getBoundingClientRect(),mw=m.offsetWidth,mh=m.offsetHeight,vw=document.documentElement.clientWidth,vh=window.innerHeight;
+  if(opt.wide)m.style.minWidth="202px";
   let left=opt.alignRight?r.right-mw:r.left;left=Math.max(8,Math.min(left,vw-mw-8));
   let top=r.bottom+4;if(top+mh>vh-80)top=Math.max(8,r.top-mh-4);
   m.style.left=left+"px";m.style.top=top+"px";anchor.setAttribute("aria-expanded","true");

@@ -34,7 +34,7 @@ Miva Open University · Interactive and Immersive Learning Team.
 | App shell: top bar, drawer and rail, active pill, colours, type, spacing | Home screenshot, plus live-DOM measurements from the Sep 2026 capture | **Reference-backed**, except the app mark: the simulated app carries a neutral mortarboard tile, neither Google's logo nor Miva's |
 | Home Classes card grid and class card | Home screenshot | **Reference-backed** (the owner card's footer icons are provisional) |
 | Class tabs, banner, left column, Stream item and post cards | Student-view capture only | **Provisional**: teacher-view Stream (composer, class code card) needs a teacher reference |
-| Classwork rows, topic headers, Create menu, assignment editor | Student-view capture plus standard Classroom behaviour | **Provisional**: the Create menu lists Assignment and Topic only |
+| Classwork rows, topic headers, Create menu, assignment editor | Reference pack (SPEC §6.6-6.7), measured from the live product | **Reference-backed**: Create lists Assignment, Quiz assignment, Question, Material, Reuse post and Topic; the editor carries the attach row and the full right rail |
 | People lists, headings, invite dialog | Student-view capture | **Provisional**: teacher-only controls follow Classroom patterns without a screenshot |
 | Tab intro cards (illustration panel, title, body, "Got it") | Classroom's "Navigating Classroom just got easier" feature-intro dialog (Sep 2026 screenshot) | **Reference-backed** layout; the three animations and their copy are written for this practice |
 | Dialogs, menus, snackbar, outlined fields | Measured on live Join and Create dialogs and menus | **Reference-backed** (styling) |
@@ -80,7 +80,7 @@ Miva Open University · Interactive and Immersive Learning Team.
 
 ## Verification
 
-The suite has **108** checks (51 original, 9 for the tab intro cards, 2 for assignment-edit logging, 7 for the opener and the walkthrough handover). The opener checks follow the sign-off list in `source/brand/OPENER.md`: no two logos overlap at any sampled frame, each stage settles centred, all three fit at 375px with no sideways scroll, the motif stays at 0.7, each logo keeps its institution's alt text, Begin takes focus, and reduced motion shows the finished frame (`source/test/verify.py`), plus a player check. They cover:
+The suite has **121** checks (51 original, 9 for the tab intro cards, 2 for assignment-edit logging, 7 for the opener and the walkthrough handover). The opener checks follow the sign-off list in `source/brand/OPENER.md`: no two logos overlap at any sampled frame, each stage settles centred, all three fit at 375px with no sideways scroll, the motif stays at 0.7, each logo keeps its institution's alt text, Begin takes focus, and reduced motion shows the finished frame (`source/test/verify.py`), plus a player check. They cover:
 
 - seeded state
 - empty and whitespace-only input blocked everywhere

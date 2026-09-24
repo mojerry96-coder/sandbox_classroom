@@ -154,6 +154,13 @@ async def main():
     ok("the composer is the modal the pack describes",comp["title"]=="Announcement" and comp["w"]==930 and comp["caret"]
        and comp["toolbar"]==["Bold","Italic","Underline","Bulleted list","Remove formatting"]
        and comp["attach"]==["Add Google Drive file","Add YouTube video","Upload file","Add link"],str(comp))
+    await pg.fill("#annText","Layering check"); await pg.wait_for_timeout(100)
+    await pg.click("#annMore"); await pg.wait_for_timeout(150)
+    ok("the Post split menu opens above its own dialog",
+       await pg.evaluate("""(()=>{const m=document.querySelector('.menu [role=menuitem]');if(!m)return false;
+         const r=m.getBoundingClientRect();const el=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+         return !!el&&(el===m||m.contains(el))})()"""))
+    await pg.keyboard.press("Escape"); await pg.wait_for_timeout(100)
     await pg.keyboard.press("Escape"); await pg.wait_for_timeout(150)
     # STREAM
     await pg.click("#annOpen")
@@ -183,6 +190,57 @@ async def main():
     ok("Classwork intro shows on first visit","topics" in (await pg.inner_text(".dlg.tabcard")).lower())
     await pg.keyboard.press("Escape"); await pg.wait_for_timeout(100)
     ok("Escape closes intro",not await pg.query_selector(".dlg.tabcard"))
+    # CLASSWORK: the Create menu and the editor (SPEC §6.6, §6.7)
+    await pg.click("#createBtn"); await pg.wait_for_timeout(150)
+    cm=await pg.evaluate("""(()=>({items:[...document.querySelectorAll('.menu [role=menuitem]')].map(b=>b.textContent.replace(/[^ -~]/g,'').trim()),
+      width:Math.round(document.querySelector('.menu').getBoundingClientRect().width),
+      sep:document.querySelectorAll('.menu hr').length}))()""")
+    ok("Create menu lists the five types and Topic after a separator",
+       cm["items"]==["Assignment","Quiz assignment","Question","Material","Reuse post","Topic"] and cm["sep"]==1 and cm["width"]==202,str(cm))
+    await pg.click("#mAssignment"); await pg.wait_for_timeout(300)
+    edi=await pg.evaluate("""(()=>({title:document.querySelector('#edT').textContent,
+      invalid:document.querySelector('#aTitle').getAttribute('aria-invalid'),
+      helpErr:document.querySelector('#aTitleHelp').classList.contains('err'),
+      assign:document.querySelector('#aAssign').disabled,
+      attach:[...document.querySelectorAll('.att5 .l')].map(e=>e.textContent),
+      rail:[...document.querySelectorAll('.ed-side .k')].map(e=>e.textContent.trim()),
+      points:document.querySelector('#aPoints').value,rubric:!!document.querySelector('#aRubric'),
+      caret:!!document.querySelector('#aMore')}))()""")
+    ok("the editor opens with the title already in its error state",edi["invalid"]=="true" and edi["helpErr"] and edi["assign"],str(edi))
+    ok("editor has the attach row and the full right rail",
+       edi["attach"]==["Drive","YouTube","Create","Upload","Link"] and edi["rail"]==["For","Assign to","Points","Due","Topic"]
+       and edi["points"]=="100" and edi["rubric"] and edi["caret"],str(edi))
+    await pg.wait_for_selector(".scrim .dlg",timeout=5000); await pg.wait_for_timeout(400)
+    ok("the first-run promo appears over the editor, once","Schedule across multiple classes" in await pg.inner_text(".scrim .dlg"))
+    await pg.click(".scrim .dlg .acts .tb >> nth=1"); await pg.wait_for_timeout(250)
+    await pg.click("#aDue"); await pg.wait_for_timeout(200)
+    ok("Due opens the date popover, with Time hidden until a date is set",
+       "Due date & time" in await pg.inner_text(".menu.due") and await pg.evaluate("document.querySelector('#timeWrap').hidden"))
+    await pg.fill("#dueDate","10/06/2026"); await pg.wait_for_timeout(150)
+    ok("choosing a date reveals the Time field",not await pg.evaluate("document.querySelector('#timeWrap').hidden"))
+    await pg.click("#dueSave"); await pg.wait_for_timeout(150)
+    await pg.click("#ptsMenu"); await pg.wait_for_timeout(150)
+    ok("Points offers the Ungraded suggestion",(await pg.inner_text(".menu [role=menuitem]")).strip()=="Ungraded")
+    await pg.keyboard.press("Escape"); await pg.wait_for_timeout(100)
+    await pg.fill("#aTitle","Draft assignment"); await pg.wait_for_timeout(100)
+    ok("typing a title clears the error state",await pg.evaluate("document.querySelector('#aTitle').getAttribute('aria-invalid')")=="false" and not await pg.is_disabled("#aAssign"))
+    # layering: a dialog opened from inside the editor must sit above it, and menus above dialogs
+    await pg.select_option("#aTopic","__new"); await pg.wait_for_timeout(300)
+    ok("Create topic from the editor opens above it, and is clickable",
+       await pg.evaluate("""(()=>{const i=document.querySelector('#topicName');if(!i)return false;
+         const r=i.getBoundingClientRect();return document.elementFromPoint(r.left+r.width/2,r.top+r.height/2)===i})()"""))
+    await pg.keyboard.press("Escape"); await pg.wait_for_timeout(200)
+    await pg.click("#edClose"); await pg.wait_for_timeout(200)
+    for menu_id,name,checks in (("#mQuestion","Question","answer"),("#mMaterial","Material","rail"),("#mQuiz","Quiz assignment","quiz")):
+        await pg.click("#createBtn"); await pg.click(menu_id); await pg.wait_for_timeout(250)
+        v=await pg.evaluate("""(()=>({title:document.querySelector('#edT').textContent,
+          answer:!!document.querySelector('#qType'),checks:document.querySelectorAll('.qopts .cbrow').length,
+          rail:[...document.querySelectorAll('.ed-side .k')].map(e=>e.textContent.trim()),
+          quiz:!!document.querySelector('.quizrow'),importing:!!document.querySelector('#qImport')}))()""")
+        if checks=="answer": ok("Question adds an answer type and its two checkboxes",v["title"]=="Question" and v["answer"] and v["checks"]==2,str(v))
+        if checks=="rail": ok("Material drops Points, Due and Rubric",v["title"]=="Material" and v["rail"]==["For","Assign to","Topic"],str(v))
+        if checks=="quiz": ok("Quiz attaches a Blank Quiz and offers grade importing",v["quiz"] and v["importing"],str(v))
+        await pg.click("#edClose"); await pg.wait_for_timeout(200)
     await pg.click("#createBtn"); await pg.click("#mTopic")
     ok("topic Add disabled when empty",await pg.is_disabled("#topicAdd"))
     await pg.fill("#topicName","   "); ok("topic Add disabled for spaces",await pg.is_disabled("#topicAdd"))
@@ -192,7 +250,7 @@ async def main():
     await pg.click("#createBtn"); await pg.click("#mAssignment")
     ok("Assign disabled without title",await pg.is_disabled("#aAssign"))
     opts=await pg.eval_on_selector_all("#aTopic option","els=>els.map(e=>e.textContent)")
-    ok("topic selector from state",opts==["No topic","Week 1"],str(opts))
+    ok("topic selector from state, with Create topic last",opts==["No topic","Week 1","Create topic"],str(opts))
     await pg.fill("#aTitle","Introduce yourself"); await pg.select_option("#aTopic",label="Week 1"); await pg.click("#aAssign")
     s=await cl(); ok("assignment filed under Week 1",s["assignments"][0]["topicId"]==s["topics"][0]["id"])
     ok("topic count shows 1 item","1 item" in await pg.inner_text(f'[data-topic="{s["topics"][0]["id"]}"] .tcount'))
