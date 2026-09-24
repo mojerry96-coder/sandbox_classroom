@@ -8,7 +8,7 @@ Miva Open University · Interactive and Immersive Learning Team.
 | File | Purpose |
 |---|---|
 | `sandbox-class.html` | The complete simulation in one file. Fonts, icons and the walkthrough video are all embedded, so it runs offline and needs no backend. |
-| `walkthrough/sandbox-walkthrough-1080p.mp4` | 76-second walkthrough at 1920×1080, 30 fps, H.264/AAC, narrated in Nigerian English. It carries a soft English caption track that is set as the default. |
+| `walkthrough/sandbox-walkthrough-1080p.mp4` | 82-second walkthrough at 1920×1080, 30 fps, H.264/AAC, narrated in Nigerian English. It carries a soft English caption track that is set as the default. |
 | `walkthrough/sandbox-walkthrough-1080p.webm` | The same walkthrough in VP9/Opus. The build embeds both, because browsers without H.264 support (such as open-source Chromium) can only play this one. |
 | `walkthrough/sandbox-walkthrough-1080p-open-captions.mp4` | The same walkthrough with the captions burned in, for players that ignore caption tracks. |
 | `walkthrough/captions.srt`, `walkthrough/captions.vtt` | Caption files. |
@@ -103,12 +103,12 @@ The suite has **146** checks (51 original, 9 for the tab intro cards, 2 for assi
 - an assignment edit that also changes the topic is logged as one action, not two
 - no localStorage use and no JS errors
 
-The player check confirmed the video loads (76 s), that the end card's Begin Practice button appears, takes focus when the video ends and starts practice, stays paused on open, and that seeking, captions and the transcript work.
+The player check confirmed the video loads (82 s), that the end card's Begin Practice button appears, takes focus when the video ends and starts practice, stays paused on open, and that seeking, captions and the transcript work.
 
 ## Walkthrough production notes
 
 - **Recording:** the real build was recorded in a separate headless demo session at 1440×810 CSS px with a device-pixel ratio of 4/3, which gives 1920×1080 frames. The interface was not redrawn or generated.
-- **Re-recorded (21 Sep 2026)** so the footage shows the Miva logo instead of the Google Classroom logo, with a new Nigerian English narrator.
+- **Re-recorded (24 Sep 2026)** for the rebuilt product: the walkthrough now shows the role picker, creating the class from nothing, the modal composer, the four tabs, inviting students who stay Invited, and Grades. Fifteen narration lines, same Nigerian English narrator.
 - **Pipeline** (run from `source/`, after `python3 build.py`): `record.py` records the build into `source/video/`; then, from `source/video/`, `schedule.py` places each narrated line against the actions, `compose.py` adds the cursor, click rings, captions and audio, and `pace.py` shortens the silent stretches (1.8×, or 2.5× for gaps over 6 s; narrated lines keep their speed). The composed cut runs 92 s and the paced one 76 s. Rebuild the page with `python3 build.py ../walkthrough/sandbox-walkthrough-1080p.mp4`.
 - **Cursor and camera:** the cursor path and click rings were composited afterwards, and the camera stays fixed.
 - **Narration:** a synthetic Nigerian English voice (ElevenLabs "Ifeoma Odumodu - Nigerian Narrator", `eleven_multilingual_v2`, stability 0.6, similarity 0.8) reads the script word for word, one file per line in `source/narration/`. To use a recorded voiceover instead, replace those 17 files and rerun the pipeline from `schedule.py`; the timings follow the new audio.

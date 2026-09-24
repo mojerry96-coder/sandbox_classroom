@@ -1188,7 +1188,7 @@ function openHelp(trigger,start){
     const d=dlgRef.el.firstElementChild;
     if(which==="menu"){d.innerHTML=`<div class="hd"><div><span class="eb">Practice Help</span><h2 id="sdT">How can we help?</h2></div><button class="ib" data-x aria-label="Close help">${I("close")}</button></div>
       <div class="bd">
-       <button class="choice" id="hWatch">${I("smart_display")}<span><b>Watch the walkthrough</b><span class="s">A 76-second captioned overview. Your sandbox isn't changed.</span></span>${I("chevron_right","go")}</button>
+       <button class="choice" id="hWatch">${I("smart_display")}<span><b>Watch the walkthrough</b><span class="s">An 82-second captioned overview. Your sandbox isn't changed.</span></span>${I("chevron_right","go")}</button>
        <button class="choice" id="hGuide">${I("route")}<span><b>Guide me</b><span class="s">Choose one action in ${tabName}. We'll highlight each step.</span></span>${I("chevron_right","go")}</button>
        <button class="choice" id="hWhat">${I("info")}<span><b>What can I do here?</b><span class="s">A short explanation of the ${tabName} tab.</span></span>${I("chevron_right","go")}</button>
       </div>`;
@@ -1224,14 +1224,14 @@ function openPlayer(trigger,opts={}){
   const has=!!VIDEO_SRC&&!VIDEO_SRC.startsWith("/*");
   const ref=makeModal("simscrim","player","plT",`
     <div class="ph2"><h2 id="plT">Walkthrough · The Sandbox Class</h2><button class="ib" id="plX" aria-label="Close walkthrough">${I("close")}</button></div>
-    <div class="vwrap">${has?`<video id="vid" preload="metadata" playsinline aria-label="Walkthrough video, 76 seconds, showing the sandbox in use">${VIDEO_WEBM.startsWith("data:")?`<source src="${VIDEO_WEBM}" type="video/webm">`:""}<source src="${VIDEO_SRC}" type="video/mp4"></video>
+    <div class="vwrap">${has?`<video id="vid" preload="metadata" playsinline aria-label="Walkthrough video, 82 seconds, showing the sandbox in use">${VIDEO_WEBM.startsWith("data:")?`<source src="${VIDEO_WEBM}" type="video/webm">`:""}<source src="${VIDEO_SRC}" type="video/mp4"></video>
        <div class="cc" id="cc" hidden></div><button class="vunmute" id="vUnmute" hidden>${I("volume_off")}Turn on sound</button><button class="vbegin" id="vBegin" hidden>${I("play_arrow","fill")}Begin Practice</button><div class="big" id="big"><button id="bigPlay" aria-label="Play walkthrough">${I("play_arrow","fill")}</button></div>`
        :`<div class="nov">The walkthrough video isn't included in this build. Use Practice Help › Guide me instead.</div>`}</div>
     ${has?`<div class="pctl">
       <button class="ib" id="pPlay" aria-label="Play">${I("play_arrow","fill")}</button>
       <button class="ib" id="pReplay" aria-label="Replay from start">${I("replay")}</button>
-      <span class="time" id="pTime">0:00 / 1:16</span>
-      <input type="range" class="seek" id="pSeek" min="0" max="76" step="0.1" value="0" aria-label="Seek">
+      <span class="time" id="pTime">0:00 / 1:22</span>
+      <input type="range" class="seek" id="pSeek" min="0" max="82" step="0.1" value="0" aria-label="Seek">
       <button class="ib" id="pMute" aria-label="Mute">${I("volume_up")}</button>
       <input type="range" class="vol" id="pVol" min="0" max="1" step="0.05" value="${lastVol}" aria-label="Volume">
       <button class="ib" id="pCC" aria-pressed="${ccOn}" aria-label="Captions">${I("closed_caption")}</button>
@@ -1252,8 +1252,8 @@ function openPlayer(trigger,opts={}){
     vb.onclick=()=>{v.pause();const fromWelcome=!$("#welcome").hidden;close();if(fromWelcome)$("#beginBtn").onclick()};
     v.onplay=setPlay;v.onpause=setPlay;
     v.onended=()=>{setPlay();endCard();vb.focus();announce("Walkthrough finished. Begin Practice is available.")};
-    v.onloadedmetadata=()=>{seek.max=v.duration||76;box.querySelector("#pTime").textContent=`${fmt(v.currentTime)} / ${fmt(v.duration)}`};
-    v.ontimeupdate=()=>{seek.value=v.currentTime;seek.setAttribute("aria-valuetext",`${fmt(v.currentTime)} of ${fmt(v.duration)}`);box.querySelector("#pTime").textContent=`${fmt(v.currentTime)} / ${fmt(v.duration||76)}`;
+    v.onloadedmetadata=()=>{seek.max=v.duration||82;box.querySelector("#pTime").textContent=`${fmt(v.currentTime)} / ${fmt(v.duration)}`};
+    v.ontimeupdate=()=>{seek.value=v.currentTime;seek.setAttribute("aria-valuetext",`${fmt(v.currentTime)} of ${fmt(v.duration)}`);box.querySelector("#pTime").textContent=`${fmt(v.currentTime)} / ${fmt(v.duration||82)}`;
       const k=CUES.findIndex(c=>v.currentTime>=c.s&&v.currentTime<c.e);cc.hidden=!ccOn||k<0;if(k>=0)cc.textContent=CUES[k].t;
       box.querySelectorAll(".tx button").forEach((b,i)=>b.classList.toggle("now",i===k));endCard()};
     seek.oninput=()=>{v.currentTime=+seek.value};

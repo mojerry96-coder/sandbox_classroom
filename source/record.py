@@ -84,105 +84,129 @@ async def main():
         p = await ctx.new_page()
         await p.goto(URL); await p.wait_for_timeout(600)
         await p.evaluate("__sandbox.skipOpener()")  # the walkthrough starts on the welcome screen
-        await p.evaluate("__sandbox.skipIntros()")  # the walkthrough narration predates the tab intro cards
+        # tab cards are part of the tour now, so they are NOT skipped  # the walkthrough narration predates the tab intro cards
         await p.add_style_tag(content="*{caret-color:#1F1F1F} .snack{animation:none}")
         r = Rec(p)
         await r.shot(0.0)
 
-        # ---- 0-10 Begin Practice
-        await r.hold(1.4)
+        # ---- welcome -> role picker
+        await r.hold(1.2)
         await r.move("#beginBtn", 1.1)
-        await r.click(0.5)
-        await r.move("#annOpen", 1.6, dx=-120)
-        print("checkpoint", round(r.t,2), "->", 10.2); r.wait_until(10.2)
+        await r.click(0.6)
+        r.mark("role"); await r.hold(1.6)
 
-        # ---- 10-28 Stream
-        await r.move("#annOpen", 0.6, dx=-60)
+        # ---- teacher, then the boot skeleton and an empty Home
+        await r.move("#roleTeacher", 1.0)
+        await r.click(0.6)
+        await r.hold(1.6)            # boot skeleton
+        r.mark("home"); await r.hold(1.2)
+
+        # ---- create the class: + menu, consumer gate, the five fields
+        await r.move("#plusBtn", 0.9)
         await r.click(0.4)
-        await r.move("#annText", 0.5, dx=-150, dy=-8, hover=False)
+        await r.move(".menu [role=menuitem]:last-child", 0.6)
+        await r.click(0.5)
+        r.mark("create"); await r.hold(0.8)
+        await r.move("#gateBox", 0.8)
+        await r.click(0.4)
+        await r.move("#gateGo", 0.7)
+        await r.click(0.6)
+        await r.move("#className", 0.6, hover=False)
         await r.hold(0.3)
-        r.mark("typing"); await r.type("Welcome, everyone. Our first class begins on Monday.", 4.8)
-        await r.hold(0.5)
-        await r.move("#annPost", 0.8)
+        await r.type("EDU 101", 1.6)
+        await r.move("#section", 0.6)
+        await r.click(0.25)          # focus the field before typing into it
+        await r.type("Sandbox Class", 1.6)
+        await r.move("#ccCreate", 0.8)
+        await r.click(1.2)           # submitting state, then the class opens
+        await r.hold(1.4)
+        await r.move("#introOk", 0.8)   # the Stream tab card
         await r.click(0.6)
-        r.wait_until(r.t + 3.6)   # let viewers read the new post
-        post_menu = '[data-post-menu]:not([data-post-menu="post-welcome"])'
-        r.mark("menu"); await r.move(post_menu, 0.9)
-        await r.click(0.3)
-        await r.move("#mDeletePost", 0.6)
-        await r.click(0.5)
-        print("checkpoint", round(r.t,2), "->", 27.9); r.wait_until(27.9)
 
-        # ---- 28-48 Classwork
-        await r.move("#tab-classwork", 0.8)
-        await r.click(0.4)
-        await r.hold(0.4)
-        await r.move("#createBtn", 0.7)
-        await r.click(0.3)
-        r.mark("topic"); await r.move("#mTopic", 0.5)
-        await r.click(0.4)
-        await r.type("Week 1", 1.1)
-        await r.move("#topicAdd", 0.6)
+        # ---- Stream
+        r.mark("stream"); await r.hold(0.6)
+        await r.move("#annOpen", 0.8)
         await r.click(0.6)
-        await r.hold(0.8)
+        await r.move("#annText", 0.5, hover=False)
+        await r.hold(0.3)
+        await r.type("Welcome, everyone. Our first class begins on Monday.", 4.0)
+        await r.move("#annPost", 0.9)
+        await r.click(0.8)
+        await r.hold(1.8)
+
+        # ---- Classwork: a topic, then an assignment filed under it
+        r.mark("classwork")
+        await r.move("#tab-classwork", 0.8)
+        await r.click(0.5)
+        await r.move("#introOk", 0.7)
+        await r.click(0.5)
+        await r.move("#createBtn", 0.7)
+        await r.click(0.4)
+        await r.move("#mTopic", 0.6)
+        await r.click(0.5)
+        await r.type("Week 1", 1.0)
+        await r.move("#topicAdd", 0.6)
+        await r.click(0.7)
         await r.move("#createBtn", 0.6)
         await r.click(0.3)
         await r.move("#mAssignment", 0.5)
-        await r.click(0.5)
-        await r.type("Introduce yourself", 2.0)
-        await r.move("#aTopic", 0.8)
-        # open the select visually by focusing it, then choose Week 1
+        await r.click(0.6)
+        await r.hold(0.9)                       # the first-run promo lands over the editor
+        await r.move(".scrim .dlg .acts .tb:last-child", 0.8)
+        await r.click(0.6)
+        await r.move("#aTitle", 0.5, hover=False)
+        await r.type("Introduce yourself", 1.8)
+        await r.move("#aTopic", 0.7)
         r.clicks.append((r.t, *r.cur))
         await p.focus("#aTopic")
         await p.select_option("#aTopic", label="Week 1")
         await p.wait_for_timeout(150); await r.shot(r.t + 0.2)
         r.t += 0.9
         await r.move("#aAssign", 0.8)
-        await r.click(0.6)
-        await r.move('[data-item]', 1.0, dx=-60)   # point at the nested assignment
-        print("checkpoint", round(r.t,2), "->", 47.9); r.wait_until(47.9)
+        await r.click(0.8)
+        await r.hold(1.6)
 
-        # ---- 48-66 People
+        # ---- People: invite two students, who stay Invited
+        r.mark("people")
         await r.move("#tab-people", 0.8)
-        await r.click(0.4)
-        await r.move("#inviteBtn", 0.8)
         await r.click(0.5)
-        await r.type("tutor@example.com", 1.9)
-        await r.move("#invSubmit", 0.6)
-        await r.click(0.6)
-        r.mark("invited"); await r.move(".b-pending", 0.8)
-        await r.hold(1.4)
-        await r.move("#addStudentBtn", 0.8)
+        await r.move("#introOk", 0.7)
         await r.click(0.5)
-        await r.type("Ada Okafor", 1.3)
-        await r.move("#stuSubmit", 0.6)
+        await r.move("#peopleInvite", 0.8)
         await r.click(0.6)
-        r.mark("added"); await r.move(".prow:last-of-type .b-active", 0.8)
-        await r.hold(1.2)
-        r.mark("regen"); await r.move("#regenBtn", 0.8)
-        await r.click(0.6)
-        await r.move("#peopleCode", 0.7)
-        print("checkpoint", round(r.t,2), "->", 65.9); r.wait_until(65.9)
+        await r.move(".contact:nth-of-type(1)", 0.8)
+        await r.click(0.3)
+        await r.move(".contact:nth-of-type(2)", 0.6)
+        await r.click(0.3)
+        await r.move("#invGo", 0.8)
+        await r.click(0.8)
+        r.mark("invited"); await r.hold(2.0)
 
-        # ---- 66-77 Practice Help
-        await r.move("#dHelp", 0.8)
+        # ---- Grades
+        r.wait_until(60.6)
+        r.mark("grades")
+        await r.move("#tab-grades", 0.8)
         await r.click(0.5)
-        await r.move("#hWatch", 0.8)
-        await r.hold(0.8)
-        await r.move("#hGuide", 0.7)
+        await r.hold(2.2)
+
+        # ---- Practice Help
+        r.wait_until(65.0)
+        r.mark("help")
+        await r.move("#dHelp", 0.9)
+        await r.click(0.6)
+        await r.move("#hGuide", 0.8)
         await r.hold(0.8)
         await r.move("#hWhat", 0.7)
-        await r.hold(1.2)
+        await r.hold(1.0)
         await r.move(".simdlg [data-x]", 0.8)
-        await r.click(0.5)
-        print("checkpoint", round(r.t,2), "->", 76.9); r.wait_until(76.9)
-
-        # ---- 77-90 End Practice / summary
-        await r.move("#dEnd", 0.8)
         await r.click(0.6)
-        await r.move(".notscore", 0.9)
-        await r.hold(1.2)
-        # smooth scroll to the confidence self-check
+
+        # ---- End Practice / summary
+        r.wait_until(73.6)
+        r.mark("summary")
+        await r.move("#dEnd", 0.8)
+        await r.click(0.7)
+        await r.hold(1.4)
         el = "#summary"
         target = await p.evaluate("(()=>{const s=document.querySelector('#summary');const f=document.querySelector('.selfc');return Math.min(f.offsetTop-40,s.scrollHeight-s.clientHeight)})()")
         steps = 14
@@ -191,28 +215,20 @@ async def main():
             await p.evaluate(f"document.querySelector('{el}').scrollTop={target*e}")
             r.t += 0.06
             await r.shot()
-        await r.hold(0.3)
+        await r.hold(0.4)
         await r.move("#sc-stream-1 + span", 0.8)
         await r.click(0.3)
         await r.move("#sc-classwork-2 + span", 0.7)
         await r.click(0.3)
-        r.mark("cont")
-        # scroll to Continue Practice
-        start = target
-        target2 = await p.evaluate("(()=>{const s=document.querySelector('#summary');return s.scrollHeight-s.clientHeight})()")
-        for i in range(1, steps + 1):
-            e = 0.5 - 0.5 * __import__('math').cos(3.14159 * i / steps)
-            await p.evaluate(f"document.querySelector('{el}').scrollTop={start+(target2-start)*e}")
-            r.t += 0.05
-            await r.shot()
-        await r.move('[data-cont="stream"]', 0.9)
-        print("checkpoint", round(r.t,2), "->", 87.2); r.wait_until(87.2)
+        r.wait_until(83.2)
+        r.mark("endcard")
+
         # end card (rendered in the page with the same fonts)
         await p.evaluate("""(()=>{const d=document.createElement('div');d.id='endcard';d.style.cssText='position:fixed;inset:0;z-index:999;background:#10223C;color:#fff;display:grid;place-items:center;text-align:center;font-family:"Google Sans",Roboto,sans-serif';
           const logo=document.querySelector('#welcome .mivalogo').src;d.innerHTML='<div><img src="'+logo+'" alt="" style="display:block;height:64px;width:auto;margin:0 auto"><div style="font:500 56px/1.1 \\'Google Sans\\';margin:34px 0 26px;letter-spacing:-.01em">Your turn</div><div style="display:inline-flex;align-items:center;gap:10px;background:#D9A53B;color:#1B1403;border-radius:14px;padding:16px 30px;font:500 20px \\'Google Sans\\'">&#9654;&nbsp; Begin Practice</div><div style="margin-top:26px;font:400 16px \\'Google Sans\\';color:#9FB0CC">EDU 101 · The Sandbox Class</div></div>';document.body.appendChild(d)})()""")
         await p.wait_for_timeout(100)
-        endcard = await r.shot(87.6)
-        meta = {"images": r.images, "keys": r.keys, "clicks": r.clicks, "end": 90.0, "marks": r.marks, "endcard_t": 87.6}
+        endcard = await r.shot(r.t + 0.4)
+        meta = {"images": r.images, "keys": r.keys, "clicks": r.clicks, "end": round(r.t + 3.0, 2), "marks": r.marks, "endcard_t": round(r.t + 0.4, 2)}
         json.dump(meta, open(os.path.join(WORK, "timeline.json"), "w"))
         print("shots", r.n, "last t", round(r.t, 2))
         await b.close()

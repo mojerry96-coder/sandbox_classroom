@@ -1,87 +1,77 @@
 [
  {
   "s": 0.6,
-  "e": 2.75,
+  "e": 2.86,
   "t": "Welcome to your sandbox class."
  },
  {
-  "s": 2.75,
-  "e": 4.84,
-  "t": "Everything here is practice."
+  "s": 2.86,
+  "e": 7.7,
+  "t": "Everything here is practice, and nothing reaches a real student."
  },
  {
-  "s": 4.84,
-  "e": 7.56,
-  "t": "Nothing you do reaches real students."
+  "s": 7.7,
+  "e": 13.9,
+  "t": "First, choose how you want to rehearse: as a teacher, or as a student."
  },
  {
-  "s": 9.14,
-  "e": 11.65,
-  "t": "Use Stream to share announcements."
+  "s": 13.9,
+  "e": 19.1,
+  "t": "A teacher starts with nothing at all, just as you would in Classroom."
  },
  {
-  "s": 11.65,
-  "e": 16.46,
-  "t": "Write a message, post it, and see where it appears."
+  "s": 19.1,
+  "e": 25.3,
+  "t": "So create your class. Give it a name, and it opens with its own class code."
  },
  {
-  "s": 18.84,
-  "e": 21.73,
-  "t": "You can remove your own post and try again."
+  "s": 25.3,
+  "e": 32.13,
+  "t": "Use Stream to share announcements. Write a message, post it, and see where it appears."
  },
  {
-  "s": 23.68,
-  "e": 26.77,
+  "s": 32.13,
+  "e": 35.68,
   "t": "Classwork keeps learning materials organised."
  },
  {
-  "s": 26.77,
-  "e": 32.77,
+  "s": 35.68,
+  "e": 41.82,
   "t": "Create a topic, then file an assignment beneath it so students can find their work."
  },
  {
-  "s": 37.13,
-  "e": 39.4,
-  "t": "Practise managing people here."
+  "s": 44.53,
+  "e": 47.07,
+  "t": "People is where you invite students."
  },
  {
-  "s": 40.72,
-  "e": 44.09,
-  "t": "A co-teacher invitation appears as Pending,"
+  "s": 49.33,
+  "e": 54.88,
+  "t": "They stay Invited until they join, exactly as they would in the real thing."
  },
  {
-  "s": 45.33,
-  "e": 48.15,
-  "t": "while this sandbox adds a student as Active."
+  "s": 54.88,
+  "e": 59.03,
+  "t": "Grades fills in once there are students and work to mark."
  },
  {
-  "s": 48.15,
-  "e": 50.99,
-  "t": "You can also regenerate the class code."
- },
- {
-  "s": 52.15,
-  "e": 59.83,
+  "s": 59.13,
+  "e": 67.62,
   "t": "Need support? Open Practice Help for an explanation, guided steps, or this walkthrough."
  },
  {
-  "s": 61.68,
-  "e": 65.49,
-  "t": "Review what you tried and decide what needs more practice."
+  "s": 67.73,
+  "e": 73.39,
+  "t": "Review what you tried and decide what needs more practice. There is no score."
  },
  {
-  "s": 65.49,
-  "e": 67.05,
-  "t": "There is no score."
+  "s": 73.39,
+  "e": 77.06,
+  "t": "Reset whenever you want, and start the whole thing again."
  },
  {
-  "s": 67.77,
-  "e": 73.26,
-  "t": "Return to any tab, explore in your own order, and reset whenever you want."
- },
- {
-  "s": 73.26,
-  "e": 75.89,
+  "s": 77.33,
+  "e": 79.97,
   "t": "Your turn \u2014 Begin Practice."
  }
 ]
