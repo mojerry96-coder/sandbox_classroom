@@ -258,6 +258,96 @@ body.rail .ni .rlbl{display:block;font:400 12px/16px var(--fs);text-align:center
 @keyframes snack{from{opacity:.001;transform:translateY(12px)}}
 @media (max-width:600px){.snack{left:16px;right:16px;min-width:0;bottom:92px}}
 
+/* ============================== Class shell, Stream (phase 2) ============================== */
+.ctabrow{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--olv);padding-right:12px}
+.ctabrow .ctabs{border-bottom:0;flex:1;min-width:0;overflow-x:auto}
+.ctabacts{display:flex;align-items:center;gap:2px;flex:none}
+.ctabacts .ovf{display:none}
+@media (max-width:860px){.ctabacts .ib:not(.ovf){display:none}.ctabacts .ovf{display:inline-grid}}
+
+/* banner controls */
+.banner{position:relative}
+.banner:after{content:"";position:absolute;inset:0 0 50% 0;background:linear-gradient(180deg,rgba(0,0,0,.35),transparent);pointer-events:none;border-radius:16px 16px 0 0}
+.custbtn{position:absolute;right:16px;top:16px;z-index:2;height:40px;padding:0 18px;border-radius:20px;background:var(--app-bg);color:var(--onv);font:500 14px/20px var(--ff);display:inline-flex;align-items:center;gap:8px}
+.custbtn:hover{background:#fff}
+.custbtn .ms{font-size:18px}
+.banner .infobtn{position:absolute;right:12px;bottom:8px;z-index:2;color:#fff}
+.banner .infobtn:hover{background:rgba(255,255,255,.18)}
+
+/* left sidebar cards */
+.lcard .dis{margin:0;color:var(--onv);font:400 13px/18px var(--fs)}
+.lcard.meet h3{margin-bottom:8px}
+.coderow{display:flex;align-items:center;gap:8px}
+.coderow .codebig{flex:1}
+
+/* composer row: tonal "New announcement" pill + Repost */
+.comprow{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.comprow .tonal{height:40px;padding:0 20px;border-radius:20px;background:var(--sec);color:var(--onsec);font:500 14px/20px var(--ff);display:inline-flex;align-items:center;gap:8px}
+.comprow .tonal:hover{background:#B3DFFB}
+.comprow .tonal .ms,.comprow .tb .ms{font-size:18px}
+
+/* announcement composer (modal) */
+.dlg.comp{width:min(930px,100%)}
+.dlg.white{background:#fff}
+.dlg.comp .forrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.dlg.comp .forrow .lab{font:400 14px/20px var(--fs);color:var(--onv)}
+.dlg.comp .allstu{min-height:40px}
+.rt{background:#fff;border:1px solid var(--olv);border-radius:8px;overflow:hidden}
+.rt textarea{width:100%;min-height:150px;border:0;outline:none;resize:vertical;padding:16px;font:400 16px/24px var(--fs);background:#fff}
+.rt textarea:focus{box-shadow:inset 0 -2px 0 var(--pri)}
+.rtbar{display:flex;gap:2px;padding:4px 8px;border-top:1px solid var(--olv);background:#fff}
+.rtbar .ib{width:40px;height:40px}
+.rtbar .ms{font-size:20px}
+.attachrow{display:flex;gap:12px;margin:16px 0 4px}
+.attachrow .att{width:40px;height:40px;border:1px solid var(--ol)}
+.attachrow .ms{font-size:20px}
+.split{display:inline-flex;align-items:stretch}
+.split .fb{border-radius:20px 0 0 20px;padding:0 20px}
+.split .caret{border-radius:0 20px 20px 0;padding:0 8px;min-width:40px;margin-left:1px}
+.split .caret .ms{font-size:20px}
+.stulist{max-height:320px;overflow:auto;margin-bottom:8px}
+.stu{display:flex;align-items:center;gap:12px;min-height:48px;font:400 16px/24px var(--fs)}
+.stu input{width:18px;height:18px;accent-color:var(--pri-filled)}
+.bigcode{font:400 clamp(40px,8vw,72px)/1.1 var(--fs);letter-spacing:.08em;color:var(--sim-gold-2);margin:16px 0}
+.kv.info{margin:0}
+.radios{border:0;padding:0;margin:16px 0 0}
+.radios legend{font:500 14px/20px var(--fs);color:var(--onv);margin-bottom:8px}
+.radios label{display:flex;align-items:center;gap:12px;min-height:44px;font:400 14px/20px var(--fs)}
+.radios input{width:18px;height:18px;accent-color:var(--pri-filled)}
+.prev{position:relative;height:120px;border-radius:12px;overflow:hidden;margin-bottom:16px;background:#1E4C8F}
+.prev canvas{position:absolute;inset:0;width:100%;height:100%}
+.prev span{position:relative;display:block;padding:16px;color:#fff;font:400 22px/28px var(--fs)}
+.ctl{font:500 14px/20px var(--fs);color:var(--onv);margin:0 0 12px}
+.swatches{display:flex;gap:12px;flex-wrap:wrap}
+.swatches button{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;color:var(--on)}
+
+/* condensed classwork notification on the Stream */
+.cpost{display:flex;align-items:center;gap:16px;background:var(--schh);border-radius:12px;padding:8px 8px 8px 20px;min-height:72px;margin-bottom:12px}
+.cpost .icon{width:40px;height:40px;border-radius:50%;background:#fff;color:var(--onv);display:grid;place-items:center;flex:none}
+.cpost .meta{flex:1;min-width:0}
+.cpost .who{font:400 14px/20px var(--fs);overflow-wrap:anywhere}
+.cpost .when{font:400 12px/16px var(--fs);color:var(--onv)}
+.cpost.fresh{animation:fresh .3s var(--ease-in)}
+.stream-empty{padding-top:24px}
+
+/* Grades */
+.gradewrap{overflow:auto}
+table.grades{width:100%;border-collapse:collapse;margin-top:16px;font:400 14px/20px var(--fs)}
+table.grades th,table.grades td{border-bottom:1px solid var(--olv);padding:12px 16px;text-align:left;vertical-align:middle}
+table.grades thead th{font-weight:500;color:var(--onv);white-space:nowrap}
+table.grades thead th span{display:block;font:400 12px/16px var(--fs);color:var(--onv)}
+table.grades tbody th{display:flex;align-items:center;gap:12px;font-weight:400}
+.nomark{color:var(--onv)}
+.nomark small{display:block;font:400 12px/16px var(--fs)}
+
+/* class settings (full-screen dialog) */
+.cset-body{display:block;padding:24px;max-width:918px;margin:0 auto}
+.cset .ed-card{margin-bottom:24px}
+.cset .ed-card h3{font:400 18px/24px var(--fs);margin:0 0 16px}
+.setrow{display:flex;align-items:center;gap:16px;justify-content:space-between;padding:12px 0}
+.setrow b{display:block;font:500 14px/20px var(--fs)}
+.setrow span{font:400 14px/20px var(--fs);color:var(--onv);letter-spacing:.06em}
+
 /* ---- Role picker (simulation layer) ---- */
 .rolewrap{min-height:100%;display:grid;place-items:center;padding:40px 16px}
 .rolecard{max-width:720px;width:100%;text-align:left}

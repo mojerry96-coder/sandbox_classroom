@@ -13,3 +13,6 @@ __pycache__/
 
 # Video work dir (record.py, schedule.py, compose.py, pace.py)
 source/video/
+
+# full Material Symbols font for source/fonts/sub.py
+source/fonts/pkgtmp/

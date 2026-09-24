@@ -9,7 +9,9 @@ This is a single-file training simulation, the Miva DT01 · DT 01 03 Google Clas
 - `body.html`: static markup for the welcome screen, Classroom shell, simulation dock, and the coach/spotlight elements. `@@I:icon_name@@` tokens are expanded at build time.
 - `app.js`: all logic, in an IIFE.
   - State: `S` is the sandbox state and `L` is the practice log, a separate object. `seed()` resets both.
-  - Rendering: `renderStream`, `renderClasswork`, `renderPeople`, `openSummary`, `showFinish`.
+  - Rendering: `renderStream`, `renderClasswork`, `renderPeople`, `renderGrades`, `openSummary`, `showFinish`.
+  - Stream (phase 2, SPEC §6.3/§6.5/§7.3): banner Customize + class info, the 258px sidebar (Meet, class code, Upcoming), the composer row, and posts in two renderings — full cards for announcements, condensed rows for classwork, switched by `A.streamClasswork` (details | condensed | hidden) from class settings. `openComposer` is the modal announcement composer; `announceTo` is the one white-surface dialog in the pack.
+  - `classSettings` is the full-screen settings dialog (details + stream setting so far); `customizeDialog` is the theme picker; `displayCode`, `classInfoDialog`, `streamSettings` are the smaller ones.
   - Dialogs: `cDialog` (Classroom style) and `simDialog` (simulation style). Both manage focus, handle Escape and return focus to the trigger.
   - `Guide` is the guided-practice engine. Steps advance on `emit()` events.
   - `openPlayer` is the walkthrough player. `#vBegin` is a real Begin Practice button laid over the one drawn on the video's end card (percent position, 16:9 frame). It shows from 0.9 s before the last cue, which is always spoken over the end card, and takes focus when the video ends.
@@ -21,7 +23,7 @@ This is a single-file training simulation, the Miva DT01 · DT 01 03 Google Clas
   - Paths are relative to this folder, so it runs as-is from here.
 - `fonts/`: the Google Sans, Google Sans Flex and Roboto woff2 files, `afacad-var.woff2` (the opener title) and `ms-sub.woff2`, a Material Symbols subset.
   - **Adding a new icon:** add its name to the list in `sub.py`, rerun it (it needs the full Material Symbols woff2 from `npm pack @fontsource-variable/material-symbols-outlined`), and rebuild. The `I("name")` helper returns nothing for icons that aren't in `icons.json`.
-- `test/verify.py`: Playwright functional suite (94 checks). Build first; the tests load `dist/local.html`. `test/player.py` checks the walkthrough player.
+- `test/verify.py`: Playwright functional suite (108 checks). Build first; the tests load `dist/local.html`. `test/player.py` checks the walkthrough player.
 - Video pipeline (work dir `video/`, not committed): `record.py` records the real build as screenshots plus a cursor timeline; `schedule.py` places the narration (`narration/s1-17.wav`) against the recorded marks; `compose.py` composites cursor, captions and audio; `pace.py` shortens silent gaps and writes `paced-cues.json`, which becomes `cues.json`. Needs numpy, soundfile, Pillow and `video/gs500.ttf` (Google Sans 500 converted from the woff2 with fontTools).
 - `brand/`: the Miva logos (blue on light, white on dark; the practice's own screens only — the Classroom shell uses a neutral mortarboard tile instead), the opener artwork (`ekiti.svg`, `miva.svg`, `tof.svg`, `chevrons.svg`) and the house spec `OPENER.md`. `build.py` inlines all of them for the `@@LOGO_*@@` tokens in `body.html`, `app.js` and `styles.css` (the chevron motif is a CSS background).
 

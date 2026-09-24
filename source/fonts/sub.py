@@ -1,7 +1,10 @@
 from fontTools.ttLib import TTFont
 from fontTools import subset
 import json,sys
-src="pkg-fontsource-variable-material-symbols-outlined-5.3.6/files/material-symbols-outlined-latin-fill-normal.woff2"
+# the full Material Symbols variable font: npm pack @fontsource-variable/material-symbols-outlined,
+# unpack it here as pkgtmp/ (git-ignored), or point MS_FULL at the woff2
+import os
+src=os.environ.get("MS_FULL","pkgtmp/package/files/material-symbols-outlined-latin-fill-normal.woff2")
 f=TTFont(src)
 bc=f.getBestCmap()
 cmap={}

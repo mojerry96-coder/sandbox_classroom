@@ -137,6 +137,24 @@ async def main():
     ok("skip link moves focus to the main region",await pg.evaluate("document.activeElement.id")=="main")
     await pg.hover("#hamb"); await pg.wait_for_timeout(700)
     ok("icon buttons have a tooltip matching the accessible name",await pg.evaluate("""(()=>{const t=document.querySelector('.tip');return !!t&&t.textContent===document.querySelector('#hamb').getAttribute('aria-label')})()"""))
+    # CLASS SHELL + STREAM to the reference (SPEC §4.4, §6.3, §6.5, §7.3)
+    tabs=await pg.eval_on_selector_all(".ctab","els=>els.map(e=>e.textContent)")
+    ok("the class page has the four tabs in order",tabs==["Stream","Classwork","People","Grades"],str(tabs))
+    ok("tab bar carries the class actions",await pg.is_visible("#tbCal") and await pg.is_visible("#tbDrive") and await pg.is_visible("#tbSettings"))
+    ok("banner has Customize and class information",await pg.is_visible("#customBtn") and await pg.is_visible("#classInfo"))
+    ok("sidebar shows Meet, the class code and Upcoming",await pg.is_visible(".lcard.meet") and await pg.is_visible("#streamCode") and "Woohoo" in await pg.inner_text(".lcol"))
+    ok("a new class opens on the Stream empty state","This is where you can talk to your class" in await pg.inner_text("#panel"))
+    ok("the composer row is a tonal pill plus Repost",await pg.is_visible("#annOpen") and await pg.is_visible("#repostBtn"))
+    await pg.click("#annOpen"); await pg.wait_for_timeout(250)
+    comp=await pg.evaluate("""(()=>({w:Math.round(document.querySelector('.dlg.comp').getBoundingClientRect().width),
+      title:document.querySelector('#cdT').textContent,
+      toolbar:[...document.querySelectorAll('.rtbar [data-rt]')].map(b=>b.getAttribute('aria-label')),
+      attach:[...document.querySelectorAll('.attachrow [data-att]')].map(b=>b.getAttribute('aria-label')),
+      caret:!!document.querySelector('#annMore')}))()""")
+    ok("the composer is the modal the pack describes",comp["title"]=="Announcement" and comp["w"]==930 and comp["caret"]
+       and comp["toolbar"]==["Bold","Italic","Underline","Bulleted list","Remove formatting"]
+       and comp["attach"]==["Add Google Drive file","Add YouTube video","Upload file","Add link"],str(comp))
+    await pg.keyboard.press("Escape"); await pg.wait_for_timeout(150)
     # STREAM
     await pg.click("#annOpen")
     ok("Post disabled when empty",await pg.is_disabled("#annPost"))
@@ -156,9 +174,9 @@ async def main():
     s=await cl(); ok("own post removed",len(s["posts"])==1)
     # edit own post
     pid=(await cl())["posts"][0]["id"]
-    await pg.click(f'[data-post-menu="{pid}"]'); await pg.click("#mEditPost"); await pg.fill("#editText","  ")
-    ok("edit save disabled when empty",await pg.is_disabled("#editSave"))
-    await pg.fill("#editText","Edited text"); await pg.click("#editSave")
+    await pg.click(f'[data-post-menu="{pid}"]'); await pg.click("#mEditPost"); await pg.fill("#annText","  ")
+    ok("edit save disabled when empty",await pg.is_disabled("#annPost"))
+    await pg.fill("#annText","Edited text"); await pg.click("#annPost")
     ok("post edited",(await cl())["posts"][0]["text"]=="Edited text")
     # CLASSWORK
     await pg.click("#tab-classwork"); await pg.wait_for_timeout(100)
@@ -201,6 +219,20 @@ async def main():
     ok("edit that also changes topic counts once",(l1["assignmentsEdited"]+l1["assignmentsMoved"])-(l0["assignmentsEdited"]+l0["assignmentsMoved"])==1,
        f'edited {l0["assignmentsEdited"]}->{l1["assignmentsEdited"]}, moved {l0["assignmentsMoved"]}->{l1["assignmentsMoved"]}')
     ok("summary total matches actions",[a for a in (await cl())["assignments"] if a["id"]==aid][0]["topicId"] is None)
+    # the Stream shows posted work as a condensed notification, and the setting can change that
+    await pg.click("#tab-stream"); await pg.wait_for_timeout(200)
+    ok("posting work adds a condensed notification to the Stream",
+       "posted a new assignment" in await pg.inner_text(".cpost") and len(await pg.query_selector_all(".cpost"))>=1)
+    ok("announcements stay full cards",len(await pg.query_selector_all(".post"))>=1)
+    await pg.click("#tbSettings"); await pg.wait_for_timeout(250)
+    ok("class settings is a full-screen dialog with Save disabled until dirty",
+       await pg.is_visible(".cset") and await pg.is_disabled("#csSave"))
+    await pg.check("input[name=csStream][value=hidden]"); await pg.wait_for_timeout(100)
+    ok("changing a setting enables Save",not await pg.is_disabled("#csSave"))
+    await pg.click("#csSave"); await pg.wait_for_timeout(250)
+    ok("hiding classwork notifications clears them from the Stream",len(await pg.query_selector_all(".cpost"))==0)
+    await pg.click("#tbSettings"); await pg.wait_for_timeout(200)
+    await pg.check("input[name=csStream][value=condensed]"); await pg.click("#csSave"); await pg.wait_for_timeout(250)
     # PEOPLE
     await pg.click("#tab-people"); await pg.wait_for_timeout(100)
     ok("People intro shows on first visit",await pg.is_visible(".dlg.tabcard")); await pg.click("#introOk")
@@ -215,6 +247,16 @@ async def main():
     sid=(await cl())["students"][0]["id"]
     await pg.click(f'[data-student-menu="{sid}"]'); await pg.click(".menu [role=menuitem]")
     ok("student removed, roster back to empty",len((await cl())["students"])==0 and "0 students" in await pg.inner_text("#headcount"))
+    # GRADES, the fourth tab (needs a student on the roster and work to mark)
+    await pg.click("#tab-people"); await pg.wait_for_timeout(200)
+    await pg.click("#addStudentBtn"); await pg.fill("#stuName","Chidi Nwosu"); await pg.click("#stuSubmit"); await pg.wait_for_timeout(250)
+    await pg.click("#tab-grades"); await pg.wait_for_timeout(250)
+    ok("Grades shows its table once there are students and work",await pg.is_visible("table.grades"))
+    grades=await pg.evaluate("""(()=>({cols:[...document.querySelectorAll('table.grades thead th')].length,
+      rows:document.querySelectorAll('table.grades tbody tr').length,
+      unmarked:document.querySelectorAll('.nomark').length}))()""")
+    ok("every student has an unmarked cell for each piece of work",grades["rows"]>=1 and grades["cols"]>=2 and grades["unmarked"]>=1,str(grades))
+    await pg.click("#tab-people"); await pg.wait_for_timeout(200)   # the class code control lives on People
     codes=set();prev=(await cl())["code"];same=False
     for i in range(40):
         await pg.click("#regenBtn"); c=(await cl())["code"]; same|=(c==prev); prev=c
@@ -232,6 +274,7 @@ async def main():
     ok("guide advanced to step 2",("step 2" in (await pg.inner_text("#coach")).lower()))
     await pg.click("#coachExit")
     ok("guide exit keeps state",json.dumps(await st())==before)
+    await pg.keyboard.press("Escape"); await pg.wait_for_timeout(150)   # close the composer the guide opened
     await pg.click("#dWatch"); await pg.wait_for_timeout(200); await pg.keyboard.press("Escape")
     ok("walkthrough doesn't alter state",json.dumps(await st())==before)
     # summary
@@ -239,7 +282,7 @@ async def main():
     t=await pg.inner_text("#summary")
     ok("summary says Not a score","Not a score" in t)
     ok("summary separates current vs actions","Your class right now" in t and "Actions you tried" in t)
-    l=await lg(); ok("log counts committed actions",l["postsCreated"]==2 and l["postsRemoved"]==1 and l["topicsCreated"]==1 and l["assignmentsCreated"]==4 and l["invitesSent"]==1 and l["studentsAdded"]==1 and l["studentsRemoved"]==1,str(l))
+    l=await lg(); ok("log counts committed actions",l["postsCreated"]==2 and l["postsRemoved"]==1 and l["topicsCreated"]==1 and l["assignmentsCreated"]==4 and l["invitesSent"]==1 and l["studentsAdded"]==2 and l["studentsRemoved"]==1,str(l))
     await pg.click("#sc-people-2"); await pg.fill("#transfer","Create topics before posting.")
     await pg.click("[data-cont='classwork']")
     ok("continue returns with state",len((await cl())["assignments"])==4 and await pg.evaluate("document.querySelector('#tab-classwork').getAttribute('aria-selected')")=="true")

@@ -31,7 +31,7 @@ function seed(){
   /* Nothing is set up in advance: the learner picks a role, then creates (or joins) the class. */
   S={user:{role:null,name:"You"},classes:[],activeId:null,flags:{unfiledNudgeShown:false,gateSeen:false}};
   L={role:null,classesCreated:0,classesJoined:0,
-     tabsVisited:[],tabOpens:{stream:0,classwork:0,people:0},
+     tabsVisited:[],tabOpens:{stream:0,classwork:0,people:0,grades:0},
      postsCreated:0,postsEdited:0,postsRemoved:0,
      topicsCreated:0,topicsRenamed:0,topicsRemoved:0,
      assignmentsCreated:0,createdFiled:0,createdUnfiled:0,assignmentsEdited:0,assignmentsMoved:0,assignmentsRemoved:0,
@@ -46,7 +46,7 @@ const unfiled=()=>A.assignments.filter(a=>!a.topicId);
 const owner=()=>!!A&&A.role==="owner";
 function makeClass(f,role){
   const c={id:nid("c-"),name:f.name,section:f.section||"",level:f.level||"",subject:f.subject||"",room:f.room||"",
-    role,code:genCode(null),theme:"Light blue",
+    role,code:genCode(null),theme:"Light blue",streamClasswork:"condensed",
     posts:[],topics:[],assignments:[],
     teachers:[],students:[]};
   if(role==="owner")c.teachers.push({id:"t-owner-"+c.id,name:"You",email:"",status:"owner"});
@@ -264,11 +264,25 @@ function paintBanners(){$$("canvas.cvs").forEach(c=>{const r=c.getBoundingClient
 window.addEventListener("resize",()=>{paintBanners();Guide.place()});
 
 /* ---------------- Class view with semantic tabs ---------------- */
-const TABS=[["stream","Stream"],["classwork","Classwork"],["people","People"]];
+const TABS=[["stream","Stream"],["classwork","Classwork"],["people","People"],["grades","Grades"]];
 function renderClass(m){
-  m.innerHTML=`<div class="sheet"><div class="ctabs" role="tablist" aria-label="${esc(A.name)}">${TABS.map(([k,l])=>`<button class="ctab" role="tab" id="tab-${k}" data-tab="${k}" aria-selected="${UI.tab===k}" aria-controls="panel" tabindex="${UI.tab===k?0:-1}">${l}</button>`).join("")}</div>
+  m.innerHTML=`<div class="sheet"><div class="ctabrow">
+   <div class="ctabs" role="tablist" aria-label="${esc(A.name)}">${TABS.map(([k,l])=>`<button class="ctab" role="tab" id="tab-${k}" data-tab="${k}" aria-selected="${UI.tab===k}" aria-controls="panel" tabindex="${UI.tab===k?0:-1}">${l}</button>`).join("")}</div>
+   <div class="ctabacts">
+     <button class="ib" id="tbCal" aria-label="Open Google Calendar for ${esc(A.name)}">${I("calendar_today")}</button>
+     <button class="ib" id="tbDrive" aria-label="Open folder for “${esc(A.name)}” in Google Drive">${I("folder_open")}</button>
+     ${owner()?`<button class="ib" id="tbSettings" aria-label="Class settings for ${esc(A.name)}">${I("settings")}</button>`:""}
+     <button class="ib ovf" id="tbMore" aria-label="More class actions" aria-haspopup="menu" aria-expanded="false">${I("more_vert")}</button>
+   </div></div>
    <div class="col" id="panel" role="tabpanel" aria-labelledby="tab-${UI.tab}"></div></div>`;
   $$(".ctab").forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+  $("#tbCal").onclick=()=>snack("The class Calendar isn't part of this practice.");
+  $("#tbDrive").onclick=()=>snack("The class Drive folder isn't part of this practice.");
+  const tset=$("#tbSettings");if(tset)tset.onclick=()=>classSettings(tset);
+  $("#tbMore").onclick=e=>{e.stopPropagation();openMenu(e.currentTarget,[
+    {icon:"calendar_today",label:"Google Calendar",fn:()=>snack("The class Calendar isn't part of this practice.")},
+    {icon:"folder_open",label:"Class Drive folder",fn:()=>snack("The class Drive folder isn't part of this practice.")}]
+    .concat(owner()?[{icon:"settings",label:"Class settings",fn:()=>classSettings($("#tbMore"))}]:[]),{alignRight:true})};
   $(".ctabs").addEventListener("keydown",e=>{const i=TABS.findIndex(t=>t[0]===UI.tab);let n=null;if(e.key==="ArrowRight")n=(i+1)%3;if(e.key==="ArrowLeft")n=(i+2)%3;if(e.key==="Home")n=0;if(e.key==="End")n=2;if(n!==null){e.preventDefault();setTab(TABS[n][0]);focusTab()}});
   renderPanel();
 }
@@ -284,56 +298,182 @@ function setTab(t,silent){
   if(!silent)announce(`${TABS.find(x=>x[0]===t)[1]} tab selected.`);
   maybeIntro(t);
 }
-function renderPanel(){({stream:renderStream,classwork:renderClasswork,people:renderPeople})[UI.tab]($("#panel"))}
+function renderPanel(){({stream:renderStream,classwork:renderClasswork,people:renderPeople,grades:renderGrades})[UI.tab]($("#panel"))}
 
 /* ======================================================================
    STREAM
    ====================================================================== */
 function renderStream(p,freshId){
-  p.innerHTML=`<section class="banner" aria-label="Class banner"><canvas class="cvs" aria-hidden="true"></canvas><h1>${esc(A.name)}</h1><div class="secn">${esc(A.section)}</div></section>
+  const posts=A.posts;
+  p.innerHTML=`<section class="banner" aria-label="Class banner"><canvas class="cvs" aria-hidden="true"></canvas>
+    <h1>${esc(A.name)}</h1><div class="secn">${esc(A.section)}</div>
+    ${owner()?`<button class="custbtn" id="customBtn">${I("edit")}Customize</button>`:""}
+    <button class="ib infobtn" id="classInfo" aria-label="View class information">${I("info")}</button></section>
   <div class="slay">
    <div class="lcol">
+    ${owner()?`<section class="lcard meet" aria-labelledby="meetH"><h3 id="meetH">Meet<button class="ib" id="meetMenu" aria-label="Meet link options" aria-haspopup="menu" aria-expanded="false">${I("more_vert")}</button></h3>
+      <p class="dis">You don't have permission to create or edit the Meet link. Contact your admin to get access.</p></section>`:""}
     <section class="lcard" aria-labelledby="ccH"><h3 id="ccH">Class code<button class="ib" id="codeMenu" aria-label="Class code options" aria-haspopup="menu" aria-expanded="false">${I("more_vert")}</button></h3>
-      <div class="codebig" id="streamCode">${esc(A.code)}</div></section>
-    <section class="lcard" aria-labelledby="upH"><h3 id="upH">Upcoming</h3><p>No work due soon</p><div class="va"><button class="tb" id="viewAll" style="padding:0 8px">View all</button></div></section>
+      <div class="coderow"><div class="codebig" id="streamCode">${esc(A.code)}</div><button class="ib" id="codeFull" aria-label="Display class code">${I("fullscreen")}</button></div></section>
+    <section class="lcard" aria-labelledby="upH"><h3 id="upH">Upcoming</h3><p>${A.assignments.length?"No work due soon":"Woohoo, no work due soon!"}</p><div class="va"><button class="tb" id="viewAll" style="padding:0 8px">View all</button></div></section>
    </div>
    <div class="feed">
-    ${owner()?`<div class="composer">${UI.composerOpen?`
-     <form class="open" id="annForm" aria-label="New announcement">
-      <div class="forrow"><span class="lab">For</span><span class="chipsel" aria-label="For ${esc(A.name)}">${esc(A.name)}${I("arrow_drop_down")}</span><span class="chipsel" aria-label="All students">${I("group")}All students</span></div>
-      <div class="ta-wrap"><label for="annText">Announce something to your class</label><textarea id="annText" aria-describedby="annHint">${esc(UI.draft)}</textarea></div>
-      <div class="crow"><span class="hint" id="annHint">${UI.draft.trim()?"Ready to post.":"Post becomes available when your announcement has text."}</span>
-       <button type="button" class="tb" id="annCancel">Cancel</button><button type="submit" class="fb" id="annPost" ${UI.draft.trim()?"":"disabled"}>Post</button></div>
-     </form>`:`
-     <button class="collapsed" id="annOpen"><span class="avatar" aria-hidden="true" style="width:40px;height:40px">Y</span>Announce something to your class</button>`}
-    </div>`:`<div class="simnote">${I("info")}<span>You are in this class as a <b>student</b>. Students see the stream but don't post announcements.</span></div>`}
-    ${A.posts.map(post=>postCard(post,post.id===freshId)).join("")}
+    ${owner()?`<div class="comprow"><button class="tonal" id="annOpen">${I("edit")}New announcement</button><button class="tb" id="repostBtn" aria-label="Reuse post">${I("repeat")}Repost</button></div>`
+      :`<div class="simnote">${I("info")}<span>You are in this class as a <b>student</b>. Students see the stream but don't post announcements.</span></div>`}
+    ${posts.length?posts.map(post=>postCard(post,post.id===freshId)).join("")
+      :`<div class="cw-empty stream-empty">${EMPTY_STREAM}<b>This is where you can talk to your class</b>
+        <span>Use the stream to share announcements, post assignments, and respond to student questions</span>
+        ${owner()?`<div style="margin-top:20px"><button class="ob" id="streamSettings">${I("settings")}Stream settings</button></div>`:""}</div>`}
    </div></div>`;
   paintBanners();
   $("#viewAll").onclick=()=>snack(`No work is due in ${A.name}.`);
-  $("#codeMenu").onclick=e=>{e.stopPropagation();openMenu($("#codeMenu"),[{icon:"content_copy",label:"Copy class code",fn:()=>snack("Class code copied (simulated).")},{icon:"autorenew",label:"Regenerate class code",fn:()=>regenerate($("#codeMenu"))}])};
-  const ao=$("#annOpen");if(ao)ao.onclick=()=>{UI.composerOpen=true;renderStream(p);$("#annText").focus();emit("composer:open")};
-  const f=$("#annForm");
-  if(f){const ta=$("#annText");
-    ta.oninput=()=>{UI.draft=ta.value;const ok=!!ta.value.trim();$("#annPost").disabled=!ok;$("#annHint").textContent=ok?"Ready to post.":"Post becomes available when your announcement has text.";if(ok)emit("composer:text")};
-    $("#annCancel").onclick=()=>{UI.composerOpen=false;UI.draft="";renderStream(p);$("#annOpen").focus();emit("composer:cancel")};
-    f.onsubmit=e=>{e.preventDefault();const t=ta.value.trim();if(!t)return;const id=nid("post-");
-      A.posts.unshift({id,author:"You",when:"Just now",edited:false,protected:false,text:t});L.postsCreated++;UI.draft="";UI.composerOpen=false;
-      renderStream(p,id);$("#annOpen").focus();snack("Posted to Stream.");emit("post:created")};
-  }
-  // inline post editing
-  const ef=$("#editForm");
-  if(ef){const ta=$("#editText");ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);
-    ta.oninput=()=>{UI.editDraft=ta.value;$("#editSave").disabled=!ta.value.trim()};
-    $("#editCancel").onclick=()=>{const id=UI.editingPost;UI.editingPost=null;renderStream(p);const b=document.querySelector(`[data-post-menu="${id}"]`);b&&b.focus()};
-    ef.onsubmit=e=>{e.preventDefault();const t=ta.value.trim();if(!t)return;const post=A.posts.find(x=>x.id===UI.editingPost);post.text=t;post.edited=true;L.postsEdited++;const id=post.id;UI.editingPost=null;renderStream(p);const b=document.querySelector(`[data-post-menu="${id}"]`);b&&b.focus();snack("Post updated.");emit("post:edited")};
-  }
+  $("#classInfo").onclick=()=>classInfoDialog($("#classInfo"));
+  const cf=$("#codeFull");if(cf)cf.onclick=()=>displayCode(cf);
+  const cb=$("#customBtn");if(cb)cb.onclick=()=>customizeDialog(cb);
+  const ss=$("#streamSettings");if(ss)ss.onclick=()=>streamSettings(ss);
+  const rp=$("#repostBtn");if(rp)rp.onclick=()=>snack("There are no earlier posts to reuse yet.");
+  const mm=$("#meetMenu");if(mm)mm.onclick=e=>{e.stopPropagation();openMenu(mm,[{icon:"link",label:"Manage Meet link",fn:()=>snack("Meet links aren't part of this practice.")}],{alignRight:true})};
+  $("#codeMenu").onclick=e=>{e.stopPropagation();openMenu($("#codeMenu"),[
+    {icon:"link",label:"Copy class invite link",fn:()=>snack("Invite link copied (simulated).")},
+    {icon:"content_copy",label:"Copy class code",fn:()=>snack("Class code copied (simulated).")},
+    {icon:"autorenew",label:"Reset class code",fn:()=>regenerate($("#codeMenu"))},
+    {icon:"visibility",label:"Display class code",fn:()=>displayCode($("#codeMenu"))}])};
+  const ao=$("#annOpen");if(ao)ao.onclick=()=>openComposer(ao);
   $$("[data-post-menu]").forEach(b=>b.onclick=e=>{e.stopPropagation();const post=A.posts.find(x=>x.id===b.dataset.postMenu);
     const items=(post.protected||!owner())?[{icon:"content_copy",label:"Copy link",fn:()=>snack("Link copied (simulated).")}]
-      :[{icon:"edit",label:"Edit",id:"mEditPost",fn:()=>{UI.editingPost=post.id;UI.editDraft=post.text;renderStream(p)}},{icon:"delete",label:"Delete",id:"mDeletePost",fn:()=>removePost(post,p)},"-",{icon:"content_copy",label:"Copy link",fn:()=>snack("Link copied (simulated).")}];
+      :[{icon:"edit",label:"Edit",id:"mEditPost",fn:()=>openComposer(b,post)},{icon:"delete",label:"Delete",id:"mDeletePost",fn:()=>removePost(post,p)},"-",{icon:"content_copy",label:"Copy link",fn:()=>snack("Link copied (simulated).")}];
     openMenu(b,items);emit("postmenu:open")});
 }
+const EMPTY_STREAM=`<svg width="230" height="150" viewBox="0 0 230 150" aria-hidden="true"><rect x="30" y="30" width="96" height="70" rx="8" fill="#E9EEF6"/><rect x="104" y="48" width="96" height="70" rx="8" fill="#DDE3EA"/><rect x="118" y="64" width="60" height="7" rx="3.5" fill="#fff"/><rect x="118" y="80" width="44" height="7" rx="3.5" fill="#fff"/><rect x="44" y="46" width="58" height="7" rx="3.5" fill="#A8C7FA"/><rect x="44" y="62" width="68" height="6" rx="3" fill="#fff"/><rect x="44" y="76" width="50" height="6" rx="3" fill="#fff"/></svg>`;
+
+/* The announcement composer is a modal in the real product, not an inline box (SPEC §6.5). */
+function openComposer(trigger,editing){
+  const draft=editing?editing.text:"";
+  const ref=makeModal("scrim","dlg comp","cdT",`<h2 id="cdT">${editing?"Edit announcement":"Announcement"}</h2>
+    <div class="forrow"><span class="lab">For</span>
+      <span class="chipsel" aria-label="Post in ${esc(A.name)} ${esc(A.section)}">${esc(A.name)}${I("arrow_drop_down")}</span>
+      <button class="ob allstu" id="allStudents">${I("group")}All students</button></div>
+    <form id="annForm">
+      <div class="rt"><label for="annText" class="sr">Announce something to your class</label>
+        <textarea id="annText" placeholder="Announce something to your class" aria-describedby="annHint">${esc(draft)}</textarea>
+        <div class="rtbar" role="toolbar" aria-label="Text formatting">
+          ${[["format_bold","Bold"],["format_italic","Italic"],["format_underlined","Underline"],["format_list_bulleted","Bulleted list"],["format_clear","Remove formatting"]]
+            .map(([ic,l])=>`<button type="button" class="ib" aria-label="${l}" data-rt="${l}">${I(ic)}</button>`).join("")}</div></div>
+      <div class="attachrow" role="group" aria-label="Attach">
+        ${[["add_to_drive","Add Google Drive file"],["smart_display","Add YouTube video"],["upload","Upload file"],["link","Add link"]]
+          .map(([ic,l])=>`<button type="button" class="ib att" aria-label="${l}" data-att="${l}">${I(ic)}</button>`).join("")}</div>
+      <p class="hint sr" id="annHint">Post becomes available when your announcement has text.</p>
+      <div class="acts"><button type="button" class="tb" data-close>Cancel</button>
+        <span class="split"><button class="fb" id="annPost" ${draft.trim()?"":"disabled"}>${editing?"Save":"Post"}</button>
+        <button class="fb caret" id="annMore" aria-haspopup="menu" aria-expanded="false" aria-label="Post options" ${draft.trim()?"":"disabled"}>${I("arrow_drop_down")}</button></span></div>
+    </form>`,
+  (d,close)=>{const ta=d.querySelector("#annText"),post=d.querySelector("#annPost"),more=d.querySelector("#annMore");
+    ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);
+    const sync=()=>{const ok=!!ta.value.trim();post.disabled=!ok;more.disabled=!ok;if(ok)emit("composer:text")};
+    ta.oninput=sync;
+    d.querySelectorAll("[data-rt]").forEach(b=>b.onclick=()=>snack(`${b.dataset.rt} isn't part of this practice.`));
+    d.querySelectorAll("[data-att]").forEach(b=>b.onclick=()=>snack(`${b.dataset.att} isn't part of this practice.`));
+    d.querySelector("#allStudents").onclick=e=>announceTo(e.currentTarget);
+    more.onclick=e=>{e.preventDefault();e.stopPropagation();openMenu(more,[
+      {label:"Post",fn:()=>submit()},{label:"Schedule",fn:()=>snack("Scheduling isn't part of this practice.")},
+      {label:"Save draft",fn:()=>snack("Drafts aren't part of this practice.")}],{alignRight:true})};
+    const submit=()=>{const t=ta.value.trim();if(!t)return;
+      if(editing){editing.text=t;editing.edited=true;L.postsEdited++;close(true);renderPanel();snack("Post updated.");emit("post:edited");return}
+      const id=nid("post-");A.posts.unshift({id,author:"You",when:"Just now",edited:false,protected:false,text:t,kind:"announcement"});
+      L.postsCreated++;close(true);renderStream($("#panel"),id);snack("Posted to Stream.");emit("post:created")};
+    d.querySelector("#annForm").onsubmit=e=>{e.preventDefault();submit()};
+    sync()},trigger);
+  emit("composer:open");return ref;
+}
+/* "Announce to" — the one dialog the pack captured on a white surface */
+function announceTo(trigger){
+  cDialog(`<h2 id="cdT">Announce to</h2>
+   ${A.students.length?`<div class="stulist">${A.students.map(s=>`<label class="stu"><input type="checkbox" checked><span class="la" style="background:${laColor(s.name)}">${esc(s.name.trim()[0].toUpperCase())}</span>${esc(s.name)}</label>`).join("")}</div>`
+     :`<div class="cw-empty" style="padding:24px 0">${EMPTY_PEOPLE}<b>There are no students in this class</b><div style="margin-top:16px"><button class="ob" id="atInvite">${I("person_add")}Invite students</button></div></div>`}
+   <div class="acts"><button class="tb" data-close>Cancel</button><button class="tb" data-close>Done</button></div>`,
+  (d,close)=>{const inv=d.querySelector("#atInvite");if(inv)inv.onclick=()=>{close(true);setTab("people");setTimeout(()=>{const b=$("#addStudentBtn");b&&b.focus()},60)}},trigger,null,"white");
+}
+function displayCode(trigger){
+  simDialog(`<div class="hd"><div><span class="eb">Class code</span><h2 id="sdT">${esc(A.name)}</h2></div><button class="ib" data-close aria-label="Close">${I("close")}</button></div>
+    <div class="bd" style="text-align:center"><div class="bigcode">${esc(A.code)}</div>
+    <p>Students join at classroom.google.com with this code. It is fictional and reaches no one.</p></div>`,()=>{},trigger);
+}
+function classInfoDialog(trigger){
+  cDialog(`<h2 id="cdT">Class information</h2>
+   <dl class="kv info"><dt>Class name</dt><dd>${esc(A.name)}</dd>${A.section?`<dt>Section</dt><dd>${esc(A.section)}</dd>`:""}
+   ${A.subject?`<dt>Subject</dt><dd>${esc(A.subject)}</dd>`:""}${A.room?`<dt>Room</dt><dd>${esc(A.room)}</dd>`:""}
+   <dt>Class code</dt><dd>${esc(A.code)}</dd><dt>Theme</dt><dd>${esc(A.theme)}</dd></dl>
+   <div class="acts"><button class="tb" data-close>Close</button></div>`,()=>{},trigger);
+}
+/* Class settings: full-screen dialog at wide widths, Save disabled until a field changes (SPEC §6.10).
+   Details and the stream setting now; the rest of the inventory lands with the settings phase. */
+function classSettings(trigger){
+  const ed=document.createElement("div");ed.className="editor cset";ed.setAttribute("role","dialog");
+  ed.setAttribute("aria-modal","true");ed.setAttribute("aria-labelledby","csT");
+  const F=[["csName","Class name","name",true],["csSection","Section","section"],["csSubject","Subject","subject"],["csRoom","Room","room"]];
+  ed.innerHTML=`<div class="ed-bar"><button type="button" class="ib" id="csClose" aria-label="Close dialog">${I("close")}</button>
+     <h2 id="csT">Class settings</h2><button class="fb" id="csSave" disabled>Save</button></div>
+   <div class="ed-body cset-body"><div class="ed-card">
+     <h3>Class Details</h3>
+     ${F.map(([id,label,key,req])=>`<div class="filled"><label for="${id}">${label}${req?"*":""}</label><input id="${id}" value="${esc(A[key]||"")}" autocomplete="off" maxlength="80"></div>`).join("")}
+   </div>
+   <div class="ed-card"><h3>General</h3>
+     <div class="setrow"><div><b>Class code</b><span>${esc(A.code)}</span></div><button class="ob" id="csReset">${I("autorenew")}Reset</button></div>
+     <fieldset class="radios"><legend>Classwork on the Stream</legend>
+       ${[["details","Show attachments and details"],["condensed","Show condensed notifications"],["hidden","Hide notifications"]]
+         .map(([v,l])=>`<label><input type="radio" name="csStream" value="${v}" ${A.streamClasswork===v?"checked":""}><span>${l}</span></label>`).join("")}</fieldset>
+   </div></div>`;
+  document.body.appendChild(ed);
+  const close=()=>{ed.remove();document.removeEventListener("keydown",esck,true);if(trigger&&document.body.contains(trigger))trigger.focus()};
+  const esck=e=>{if(e.key==="Escape"&&!document.querySelector(".menu")){e.stopPropagation();close()}};
+  document.addEventListener("keydown",esck,true);trapFocus(ed);
+  const save=ed.querySelector("#csSave"),dirty=()=>{save.disabled=false};
+  ed.querySelectorAll("input").forEach(i=>{i.oninput=dirty;i.onchange=dirty});
+  ed.querySelector("#csClose").onclick=close;
+  ed.querySelector("#csReset").onclick=()=>{regenerate(null);close();snack(`New class code: ${A.code}.`)};
+  save.onclick=()=>{const n=ed.querySelector("#csName").value.trim();if(!n){ed.querySelector("#csName").focus();return}
+    A.name=n;A.section=ed.querySelector("#csSection").value.trim();A.subject=ed.querySelector("#csSubject").value.trim();
+    A.room=ed.querySelector("#csRoom").value.trim();A.streamClasswork=ed.querySelector("input[name=csStream]:checked").value;
+    close();renderAll();snack("Class settings saved.")};
+  ed.querySelector("#csName").focus();
+  emit("settings:open");
+}
+function streamSettings(trigger){
+  cDialog(`<h2 id="cdT">Stream settings</h2>
+   <div class="simnote">${I("science")}<span><b>Simplified for practice.</b> Classroom keeps these in class settings; the one that changes what you see here is below.</span></div>
+   <fieldset class="radios"><legend>Classwork on the Stream</legend>
+     ${[["details","Show attachments and details"],["condensed","Show condensed notifications"],["hidden","Hide notifications"]]
+       .map(([v,l])=>`<label><input type="radio" name="cwStream" value="${v}" ${A.streamClasswork===v?"checked":""}><span>${l}</span></label>`).join("")}</fieldset>
+   <div class="acts"><button class="tb" data-close>Cancel</button><button class="tb" id="ssSave">Save</button></div>`,
+  (d,close)=>{d.querySelector("#ssSave").onclick=()=>{const v=d.querySelector("input[name=cwStream]:checked").value;A.streamClasswork=v;close(true);renderPanel();snack("Stream settings saved.")}},trigger);
+}
+function customizeDialog(trigger){
+  const THEMES=[["Blue","#D0E4FF","#3271EA"],["Green","#BEEFBB","#128937"],["Pink","#FFD8EF","#DC258D"],["Orange","#FFDCC3","#E86E00"],["Cyan","#ACEDFF","#009EBB"],["Purple","#EEDCFE","#7438D2"],["Light blue","#E7F2FF","#4E8FF8"],["Grey","#E3E3E3","#5E5E5E"]];
+  cDialog(`<h2 id="cdT">Customize appearance</h2>
+   <div class="prev" aria-hidden="true"><canvas class="cvs"></canvas><span>${esc(A.name)}</span></div>
+   <h3 class="ctl">Select theme color</h3>
+   <div class="swatches" role="radiogroup" aria-label="Select theme color">
+     ${THEMES.map(([n,fill,ring])=>`<button role="radio" aria-checked="${A.theme===n}" aria-label="${n}" data-theme="${n}" style="background:${fill};box-shadow:inset 0 0 0 2px ${ring}">${A.theme===n?I("check"):""}</button>`).join("")}</div>
+   <div class="acts"><button class="tb" data-close>Cancel</button><button class="tb" id="cuSave" disabled>Save</button></div>`,
+  (d,close)=>{let pick=A.theme;paintBanners();
+    d.querySelectorAll("[data-theme]").forEach(b=>b.onclick=()=>{pick=b.dataset.theme;
+      d.querySelectorAll("[data-theme]").forEach(x=>{x.setAttribute("aria-checked",x.dataset.theme===pick);x.innerHTML=x.dataset.theme===pick?I("check"):""});
+      d.querySelector("#cuSave").disabled=pick===A.theme});
+    d.querySelector("#cuSave").onclick=()=>{A.theme=pick;close(true);renderPanel();snack(`Theme changed to ${pick}.`)}},trigger);
+}
+const EMPTY_PEOPLE=`<svg width="200" height="140" viewBox="0 0 200 140" aria-hidden="true"><rect x="34" y="86" width="132" height="26" rx="8" fill="#E9EEF6"/><path d="M66 86c0-16 13-28 29-28s29 12 29 28z" fill="#DDE3EA"/><circle cx="95" cy="46" r="15" fill="#DDE3EA"/><circle cx="88" cy="44" r="2" fill="#5F6368"/><circle cx="102" cy="44" r="2" fill="#5F6368"/><path d="M88 52c4 3 10 3 14 0" stroke="#5F6368" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+const EMPTY_GRADES=`<svg width="200" height="150" viewBox="0 0 200 150" aria-hidden="true"><rect x="40" y="40" width="120" height="76" rx="10" fill="#E9EEF6"/><rect x="56" y="58" width="40" height="8" rx="4" fill="#A8C7FA"/><rect x="56" y="76" width="88" height="6" rx="3" fill="#fff"/><rect x="56" y="90" width="66" height="6" rx="3" fill="#fff"/><circle cx="150" cy="106" r="16" fill="#0B57D0" opacity=".12"/><path d="M143 106h14M150 99v14" stroke="#0B57D0" stroke-width="2.5" stroke-linecap="round"/></svg>`;
 function postCard(post,fresh){
+  if(post.kind==="classwork"){
+    if(A.streamClasswork==="hidden")return "";
+    if(A.streamClasswork==="condensed")return `<article class="cpost ${fresh?"fresh":""}" data-post="${post.id}">
+      <span class="icon" aria-hidden="true">${I("assignment")}</span>
+      <div class="meta"><div class="who">${esc(post.author)} posted a new assignment: ${esc(post.text)}</div><div class="when">${esc(post.when)}</div></div>
+      <button class="ib" data-post-menu="${post.id}" aria-haspopup="menu" aria-expanded="false" aria-label="Options for ${esc(post.text)}">${I("more_vert")}</button></article>`;
+  }
+  return fullPostCard(post,fresh);
+}
+function fullPostCard(post,fresh){
   const editing=UI.editingPost===post.id;
   return `<article class="post ${fresh?"fresh":""}" aria-labelledby="ph-${post.id}" data-post="${post.id}">
    <div class="post-h"><span class="av" style="background:${post.protected?"#1E8E3E":"#5C6BC0"}" aria-hidden="true">${post.protected?"M":"Y"}</span>
@@ -436,7 +576,8 @@ function openAssignmentEditor(a,trigger){
     /* One commit is one logged action: an edit that also changes the topic counts as an edit only,
        so the summary's "moved or edited" total never double-counts it. */
     if(a){a.title=title;a.instructions=instructions;a.topicId=topicId;a.edited=true;L.assignmentsEdited++}
-    else{A.assignments.unshift({id:nid("asg-"),title,instructions,topicId,edited:false});L.assignmentsCreated++;topicId?L.createdFiled++:L.createdUnfiled++}
+    else{A.assignments.unshift({id:nid("asg-"),title,instructions,topicId,edited:false});L.assignmentsCreated++;topicId?L.createdFiled++:L.createdUnfiled++;
+      A.posts.unshift({id:nid("post-"),author:"You",when:"Just now",edited:false,protected:true,text:title,kind:"classwork"})}
     const nud=maybeNudge();
     ed.remove();document.removeEventListener("keydown",esck,true);
     if(UI.view!=="class"||UI.tab!=="classwork"){UI.view="class";UI.tab="classwork"}
@@ -445,6 +586,25 @@ function openAssignmentEditor(a,trigger){
     snack(a?"Assignment updated.":tn?`Assignment filed under “${excerpt(tn,30)}”.`:"Assignment added to No topic.");
     if(nud)announceNudge();emit(a?"assign:edited":"assign:created")};
   emit("assign:editor");
+}
+
+/* ======================================================================
+   GRADES — the fourth tab. Empty until there is work and there are students.
+   ====================================================================== */
+function renderGrades(p){
+  const students=A.students,work=A.assignments;
+  if(!students.length||!work.length){
+    p.innerHTML=`<div class="cw-empty">${EMPTY_GRADES}<b>This is where you'll view and manage grades</b>
+      <span>${!students.length?"Grades appear once students are in the class and there is work to mark.":"Create an assignment and grades for it appear here."}</span>
+      ${owner()&&!students.length?`<div style="margin-top:20px"><button class="ob" id="grInvite">${I("person_add")}Invite students</button></div>`:""}</div>`;
+    const gi=$("#grInvite");if(gi)gi.onclick=()=>{setTab("people");setTimeout(()=>{const b=$("#addStudentBtn");b&&b.focus()},60)};
+    return;
+  }
+  p.innerHTML=`<div class="gradewrap"><div class="simnote">${I("science")}<span><b>Simplified for practice.</b> Marks aren't entered here; this shows the shape of the Grades table, with every student unmarked.</span></div>
+   <table class="grades"><caption class="sr">Grades for ${esc(A.name)}</caption>
+    <thead><tr><th scope="col">Student</th>${work.map(a=>`<th scope="col">${esc(excerpt(a.title,18))}<span>out of 100</span></th>`).join("")}</tr></thead>
+    <tbody>${students.map(s=>`<tr><th scope="row"><span class="la" style="background:${laColor(s.name)}">${esc(s.name.trim()[0].toUpperCase())}</span>${esc(s.name)}</th>
+      ${work.map(()=>`<td><span class="nomark">–<small>No mark</small></span></td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
 
 /* ======================================================================
@@ -545,7 +705,7 @@ function makeModal(scrimClass,boxClass,labelId,html,onMount,trigger,onCancel){
   if(!s.contains(document.activeElement)){const f=s.querySelector("input,select,textarea,button:not([disabled])");f&&f.focus()}
   return {el:s,close};
 }
-const cDialog=(html,onMount,trigger,onCancel)=>makeModal("scrim","dlg","cdT",html,onMount,trigger,onCancel);
+const cDialog=(html,onMount,trigger,onCancel,surface)=>makeModal("scrim","dlg"+(surface==="white"?" white":""),"cdT",html,onMount,trigger,onCancel);
 const simDialog=(html,onMount,trigger)=>makeModal("simscrim","simdlg","sdT",html,onMount,trigger);
 
 /* ---------------- skip link, Help FAB, tooltips ---------------- */
@@ -642,11 +802,12 @@ const INTROS={
 };
 const INTRO_DUR={stream:"8s",classwork:"9s",people:"10s"};
 function maybeIntro(t){
-  if(introSeen[t])return;
+  if(introSeen[t]||!INTROS[t])return;
   setTimeout(()=>{if(introSeen[t]||UI.view!=="class"||UI.tab!==t||Guide.g||$("#shell").hidden||document.querySelector(".scrim,.simscrim,.editor"))return;
     showIntro(t,$("#tab-"+t))},0);
 }
 function showIntro(t,trigger){
+  if(!INTROS[t])return;
   introSeen[t]=true;if(document.querySelector(".dlg.tabcard"))return;const x=INTROS[t];
   makeModal("scrim","dlg tabcard","cdT",`<div class="iv" role="img" aria-label="${esc(x.label)}" style="--d:${INTRO_DUR[t]}">${x.svg()}</div>
     <h2 id="cdT">${esc(x.title)}</h2><p id="ivBody">${esc(x.body)}</p>
@@ -660,7 +821,8 @@ function showIntro(t,trigger){
 const ABOUT={
   stream:"Stream is the class conversation. Post announcements, edit or delete your own posts, and see the newest post appear at the top.",
   classwork:"Classwork holds the work students complete. Create topics first, then file assignments under them so the list stays easy to scan.",
-  people:"People shows who is in the class. Invited co-teachers stay Pending until they accept; practice students join as Active. The class code controls who can join."
+  people:"People shows who is in the class. Invited co-teachers stay Pending until they accept; practice students join as Active. The class code controls who can join.",
+  grades:"Grades collects every student's work for each assignment. It stays empty until the class has both students and work, and in this practice no marks are entered — it shows you where marking would happen."
 };
 const GUIDES={
   stream:[
@@ -693,6 +855,7 @@ const GUIDES={
       {t:"#mMove",x:"Choose Move to topic.",until:"move:dialog"},
       {t:"#moveTopic",x:"Pick a topic, then select Move.",until:"assign:moved"}]}
   ],
+  grades:[],
   people:[
     {key:"invite",title:"Invite a co-teacher",steps:[
       {t:"#inviteBtn",x:"Select Invite teachers.",until:"invite:dialog"},
@@ -762,11 +925,12 @@ function openHelp(trigger,start){
       d.querySelector("#hGuide").onclick=()=>view("guide");d.querySelector("#hWhat").onclick=()=>view("what");d.querySelector("#hWatch").focus()}
     if(which==="guide"){d.innerHTML=`<div class="hd"><div><span class="eb">Guide me · ${tabName}</span><h2 id="sdT">What would you like to practise?</h2></div><button class="ib" data-x aria-label="Close help">${I("close")}</button></div>
       <div class="bd"><button class="back" id="hBack">${I("arrow_back")}Back</button>
+       ${!GUIDES[tab].length?`<p style="margin:8px 0 0;color:var(--sim-muted)">There's nothing to rehearse on this tab yet. Open Stream, Classwork or People and choose Practice Help again.</p>`:""}
        ${GUIDES[tab].map((g,i)=>`<button class="choice" data-g="${i}">${I("touch_app")}<span><b>${esc(g.title)}</b><span class="s">${g.needs&&!g.needs()?esc(g.needMsg):plural(g.steps.length,"step")+" · leave at any time"}</span></span>${I("chevron_right","go")}</button>`).join("")}
        <p style="margin-top:14px;font-size:13px;color:var(--sim-muted)">Other tabs have their own guides. Open a tab, then choose Practice Help.</p></div>`;
       d.querySelector("#hBack").onclick=()=>view("menu");
       d.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{const g=GUIDES[tab][+b.dataset.g];dlgRef.close(true);setTimeout(()=>{Guide.start(g);const el=Guide.target();el&&el.focus()},60)});
-      d.querySelector("[data-g]").focus()}
+      const first=d.querySelector("[data-g]");(first||d.querySelector("#hBack")).focus()}
     if(which==="what"){d.innerHTML=`<div class="hd"><div><span class="eb">What can I do here?</span><h2 id="sdT">${tabName}</h2></div><button class="ib" data-x aria-label="Close help">${I("close")}</button></div>
       <div class="bd"><p>${ABOUT[tab]}</p><p style="color:var(--sim-muted);font-size:14px">Everything is fictional and reversible. Reset Sandbox starts over with a fresh class code.</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;margin-top:8px"><button class="back" id="hBack">${I("arrow_back")}Back</button><span style="display:flex;gap:10px;flex-wrap:wrap"><button class="simbtn ghost" id="hIntro">${I("smart_display")}Replay the ${tabName} intro</button><button class="simbtn" id="hTry">${I("route")}Guide me through ${tabName}</button></span></div></div>`;
